@@ -51,19 +51,21 @@ void loop() {
 
   if (Serial.available() > 0) {
     String msg = Serial.readStringUntil('\n');
+    String cm = ",";
 
     if (msg.indexOf("Getmap") >= 0) {
       String TMAP = "TMAP:" + generateStringMap(outputMapThrottle);
-      Serial.print(TMAP);
-      Serial.println(',');
+//      Serial.print(TMAP);
+//      Serial.println(',');
 
       String BMAP = "BMAP:" + generateStringMap(outputMapBrake);
-      Serial.print(BMAP);
-      Serial.println(',');
+//      Serial.print(BMAP);
+//      Serial.println(',');
 
       String CMAP = "CMAP:" + generateStringMap(outputMapClutch);
-      Serial.print(CMAP);
-      Serial.println(',');
+//      Serial.print(CMAP);
+      
+      Serial.println(TMAP + cm + BMAP + cm + CMAP);
     }
 
     if (msg.indexOf("Setmap") >= 0) {
@@ -92,7 +94,7 @@ void loop() {
     int restThrottleValue = throttleRawValue - 74;
 
     ThrottleBefore = restThrottleValue / 4;
-    ThrottleAfter = multiMap<int>(ThrottleBefore, inputMapThrottle, outputMapThrottle, 50);
+    ThrottleAfter = multiMap<int>(ThrottleBefore, inputMapThrottle, outputMapThrottle, 100);
     Joystick.setThrottle(ThrottleAfter);
   }
 
@@ -104,7 +106,7 @@ void loop() {
     int restBrakeValue = brakeRawValue - 74;
 
     BrakeBefore = restBrakeValue / 4;
-    BrakeAfter = multiMap<int>(BrakeBefore, inputMapBrake, outputMapBrake, 50);
+    BrakeAfter = multiMap<int>(BrakeBefore, inputMapBrake, outputMapBrake, 100);
     Joystick.setBrake(BrakeAfter);
   }
 
@@ -116,24 +118,41 @@ void loop() {
     int restClutchValue = clutchRawValue - 74;
 
     ClutchBefore = restClutchValue / 4;
-    ClutchAfter = multiMap<int>(ClutchBefore, inputMapClutch, outputMapClutch, 50);
+    ClutchAfter = multiMap<int>(ClutchBefore, inputMapClutch, outputMapClutch, 100);
     Joystick.setZAxis(ClutchAfter);
   }
 
 
   String p1 = ";";
-  Serial.print("T:");
-  Serial.println(ThrottleBefore + p1 + ThrottleAfter);
+  String cm = ",";
 
-  Serial.print("B:");
-  Serial.println(BrakeBefore + p1 + BrakeAfter);
+  String throttleStringPrefix = "T:";
+  String throttleStringValues = ThrottleBefore + p1 + ThrottleAfter + cm;
+  String throttleString = throttleStringPrefix + throttleStringValues;
+  
+//  Serial.print("T:");
+//  Serial.println(ThrottleBefore + p1 + ThrottleAfter);
 
-  Serial.print("C:");
-  Serial.println(ClutchBefore + p1 + ClutchAfter);
+
+  String brakeStringPrefix = "B:";
+  String brakeStringValues = BrakeBefore + p1 + BrakeAfter + cm;
+  String brakeString = brakeStringPrefix + brakeStringValues;
+  
+
+//  Serial.print("B:");
+//  Serial.println(BrakeBefore + p1 + BrakeAfter);
+
+  String clutchStringPrefix = "C:";
+  String clutchStringValues = ClutchBefore + p1 + ClutchAfter + cm;
+  String clutchString = clutchStringPrefix + clutchStringValues;
+
+  Serial.println(throttleString + brakeString + clutchString);
+//  Serial.print("C:");
+//  Serial.println(ClutchBefore + p1 + ClutchAfter);
 
   Joystick.sendState(); // Update the Joystick status on the PC
-  Serial.flush();
-  delay(100);
+//  Serial.flush();
+//  delay(150);
 }
 
 
