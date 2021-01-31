@@ -94,7 +94,7 @@ void loop() {
     int restThrottleValue = throttleRawValue - 74;
 
     ThrottleBefore = restThrottleValue / 4;
-    ThrottleAfter = multiMap<int>(ThrottleBefore, inputMapThrottle, outputMapThrottle, 100);
+    ThrottleAfter = multiMap<int>(ThrottleBefore, inputMapThrottle, outputMapThrottle, 6);
     Joystick.setThrottle(ThrottleAfter);
   }
 
@@ -106,7 +106,7 @@ void loop() {
     int restBrakeValue = brakeRawValue - 74;
 
     BrakeBefore = restBrakeValue / 4;
-    BrakeAfter = multiMap<int>(BrakeBefore, inputMapBrake, outputMapBrake, 100);
+    BrakeAfter = multiMap<int>(BrakeBefore, inputMapBrake, outputMapBrake, 6);
     Joystick.setBrake(BrakeAfter);
   }
 
@@ -118,7 +118,7 @@ void loop() {
     int restClutchValue = clutchRawValue - 74;
 
     ClutchBefore = restClutchValue / 4;
-    ClutchAfter = multiMap<int>(ClutchBefore, inputMapClutch, outputMapClutch, 100);
+    ClutchAfter = multiMap<int>(ClutchBefore, inputMapClutch, outputMapClutch, 6);
     Joystick.setZAxis(ClutchAfter);
   }
 
