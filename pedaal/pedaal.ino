@@ -1,7 +1,12 @@
 // 11-10-2020
 #include <Joystick.h>  // Using the lib included with SimHub originally from Matthew Heironimus
 #include "MultiMap.h"
-//#include <EEPROMex.h>
+#include <EEPROM.h>
+
+#define E_INIT 1023
+#define E_CLUTCH 0
+#define E_THROTTLE 30
+#define E_BRAKE 60
 
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID, JOYSTICK_TYPE_GAMEPAD,
                    0, 0,                  // Button Count, Hat Switch Count
@@ -10,16 +15,29 @@ Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID, JOYSTICK_TYPE_GAMEPAD,
                    false, true,          // rudder or throttle
                    false, true, false);  // accelerator, brake, or steering
 
-
-//const bool initAutoSendState = true;
-int throttleValue = 0;
-int brakeValue = 0;
 int clutchValue = 0;
+int inputMapClutch[6] =  { 0, 20, 40, 60, 80, 100 };
+int outputMapClutch[6] = { 0, 20, 40, 60, 80, 100 };
+int ClutchBefore;
+float ClutchAfter;
+
+int throttleValue = 0;
+int inputMapThrottle[6] =  { 0, 20, 40, 60, 80, 100 };
+int outputMapThrottle[6] = { 0, 20, 40, 60, 80, 100 };
+int ThrottleBefore;
+float ThrottleAfter;
+
+int brakeValue = 0;
+int inputMapBrake[6] =  { 0, 20, 40, 60, 80, 100 };
+int outputMapBrake[6] = { 0, 20, 40, 60, 80, 100 };
+int BrakeBefore;
+float BrakeAfter;
 
 // the setup routine runs once when you press reset:
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(115200);
+  loadEEPROMSettings();
   Joystick.begin();
   Joystick.setThrottle(throttleValue);
   Joystick.setBrake(brakeValue);
@@ -27,50 +45,17 @@ void setup() {
   delay(2000);
 }
 
-
-int inputMapClutch[6] =  { 0, 20, 40, 60, 80, 100 };
-int outputMapClutch[6] = { 0, 15, 43, 53, 75, 100 };
-
-int inputMapThrottle[6] =  { 0, 20, 40, 60, 80, 100 };
-int outputMapThrottle[6] = { 0, 15, 43, 53, 75, 100 };
-
-int inputMapBrake[6] =  { 0, 20, 40, 60, 80, 100 };
-int outputMapBrake[6] = { 0, 15, 43, 53, 75, 100 };
-
-int BrakeBefore;
-float BrakeAfter;
-
-int ThrottleBefore;
-float ThrottleAfter;
-
-int ClutchBefore;
-float ClutchAfter;
-
 // the loop routine runs over and over again forever:
 void loop() {
-
   if (Serial.available() > 0) {
     String msg = Serial.readStringUntil('\n');
     String cm = ",";
 
     if (msg.indexOf("Getmap") >= 0) {
       String TMAP = "TMAP:" + generateStringMap(outputMapThrottle);
-//      Serial.print(TMAP);
-//      Serial.println(',');
-
       String BMAP = "BMAP:" + generateStringMap(outputMapBrake);
-//      Serial.print(BMAP);
-//      Serial.println(',');
-
       String CMAP = "CMAP:" + generateStringMap(outputMapClutch);
-//      Serial.print(CMAP);
-      
       Serial.println(TMAP + cm + BMAP + cm + CMAP);
-    }
-
-    if (msg.indexOf("Setmap") >= 0) {
-      //      Serial.print("setMap called");
-      //      Serial.println(',');
     }
 
     updateThrottleMap(msg);
@@ -82,7 +67,7 @@ void loop() {
   // read the input on analog pins
   int throttleRawValue = analogRead(A0);
   int brakeRawValue = analogRead(A3);
-  int brakePresureRawValue = analogRead(A2);
+  //  int brakePresureRawValue = analogRead(A2);
   int clutchRawValue = analogRead(A1);
 
   // print out the value you read:
@@ -92,7 +77,6 @@ void loop() {
     Joystick.setThrottle(0);
   } else {
     int restThrottleValue = throttleRawValue - 74;
-
     ThrottleBefore = restThrottleValue / 4;
     ThrottleAfter = multiMap<int>(ThrottleBefore, inputMapThrottle, outputMapThrottle, 6);
     Joystick.setThrottle(ThrottleAfter);
@@ -104,7 +88,6 @@ void loop() {
     Joystick.setBrake(0);
   } else {
     int restBrakeValue = brakeRawValue - 74;
-
     BrakeBefore = restBrakeValue / 4;
     BrakeAfter = multiMap<int>(BrakeBefore, inputMapBrake, outputMapBrake, 6);
     Joystick.setBrake(BrakeAfter);
@@ -116,7 +99,6 @@ void loop() {
     Joystick.setZAxis(0);
   } else {
     int restClutchValue = clutchRawValue - 74;
-
     ClutchBefore = restClutchValue / 4;
     ClutchAfter = multiMap<int>(ClutchBefore, inputMapClutch, outputMapClutch, 6);
     Joystick.setZAxis(ClutchAfter);
@@ -129,61 +111,73 @@ void loop() {
   String throttleStringPrefix = "T:";
   String throttleStringValues = ThrottleBefore + p1 + ThrottleAfter + cm;
   String throttleString = throttleStringPrefix + throttleStringValues;
-  
-//  Serial.print("T:");
-//  Serial.println(ThrottleBefore + p1 + ThrottleAfter);
-
 
   String brakeStringPrefix = "B:";
   String brakeStringValues = BrakeBefore + p1 + BrakeAfter + cm;
   String brakeString = brakeStringPrefix + brakeStringValues;
-  
-
-//  Serial.print("B:");
-//  Serial.println(BrakeBefore + p1 + BrakeAfter);
 
   String clutchStringPrefix = "C:";
   String clutchStringValues = ClutchBefore + p1 + ClutchAfter + cm;
   String clutchString = clutchStringPrefix + clutchStringValues;
 
   Serial.println(throttleString + brakeString + clutchString);
-//  Serial.print("C:");
-//  Serial.println(ClutchBefore + p1 + ClutchAfter);
-
   Joystick.sendState(); // Update the Joystick status on the PC
-//  Serial.flush();
-//  delay(150);
+  //  Serial.flush();
+  //  delay(150);
 }
-
 
 
 //---------------------------------------------------------
 
-//bool write_StringEEPROM(int Addr, String input) {
-//  char charbuf[15];
-//  input.toCharArray(charbuf, 15);
-//
-//  return EEPROM.writeBlock<char>(Addr, charbuf, 15);
-//}
-//
-//bool update_StringEEPROM(int Addr, String input) {
-//  char charbuf[15];
-//  input.toCharArray(charbuf, 15);
-//
-//  return EEPROM.updateBlock<char>(Addr, charbuf, 15);
-//}
-//
-//
-//String read_StringEEPROM(int Addr) {
-//  String outputEEPROM;
-//  char output[] = " ";
-//
-//  EEPROM.readBlock<char>(Addr, output, 15);
-//  //convert to string
-//  outputEEPROM = String(output);
-//
-//  return outputEEPROM;
-//}
+void loadEEPROMSettings() {
+  if (EEPROM.read(E_INIT) == 'T') {
+     //read
+    String EEPROM_ClutchMap = readStringFromEEPROM(0);
+    String CMAP = "CMAP:";
+    updateClutchMap(CMAP + EEPROM_ClutchMap);
+
+    String EEPROM_ThrottleMap = readStringFromEEPROM(30);
+    String TMAP = "TMAP:";
+    updateThrottleMap(TMAP + EEPROM_ThrottleMap);
+
+    String EEPROM_BrakeMap = readStringFromEEPROM(60);
+    String BMAP = "BMAP:";
+    updateBrakeMap(BMAP + EEPROM_BrakeMap);
+  } else {
+    // write
+    EEPROM.write(E_INIT, 'T');
+    writeStringToEEPROM(0, generateStringMap(outputMapClutch));
+    writeStringToEEPROM(30, generateStringMap(outputMapThrottle));
+    writeStringToEEPROM(60, generateStringMap(outputMapBrake));
+  }
+
+}
+
+void writeStringToEEPROM(int addrOffset, const String &strToWrite)
+{
+  byte len = strToWrite.length();
+  //  Serial.println(len);
+  EEPROM.write(addrOffset, len);
+  for (int i = 0; i < len; i++)
+  {
+    EEPROM.write(addrOffset + 1 + i, strToWrite[i]);
+  }
+}
+
+String readStringFromEEPROM(int addrOffset)
+{
+  int newStrLen = EEPROM.read(addrOffset);
+  char data[newStrLen + 1];
+  for (int i = 0; i < newStrLen; i++)
+  {
+    data[i] = EEPROM.read(addrOffset + 1 + i);
+  }
+  data[newStrLen] = '\0'; // the character may appear in a weird way, you should read: 'only one backslash and 0'
+  return String(data);
+}
+
+
+//---------------------------------------------------------
 
 String generateStringMap(int *lists) {
   String output;
@@ -217,6 +211,9 @@ void updateThrottleMap (String msg) {
     outputMapThrottle[3] = tpart3.toInt();
     outputMapThrottle[4] = tpart4.toInt();
     outputMapThrottle[5] = tpart5.toInt();
+
+    // update EEPROM settings
+    writeStringToEEPROM(30, generateStringMap(outputMapThrottle));
   }
 }
 
@@ -237,6 +234,9 @@ void updateBrakeMap(String msg) {
     outputMapBrake[3] = bpart3.toInt();
     outputMapBrake[4] = bpart4.toInt();
     outputMapBrake[5] = bpart5.toInt();
+
+    // update EEPROM settings
+    writeStringToEEPROM(60, generateStringMap(outputMapBrake));
   }
 }
 
@@ -257,12 +257,14 @@ void updateClutchMap(String msg) {
     outputMapClutch[3] = cpart3.toInt();
     outputMapClutch[4] = cpart4.toInt();
     outputMapClutch[5] = cpart5.toInt();
+
+    // update EEPROM settings
+    writeStringToEEPROM(0, generateStringMap(outputMapClutch));
   }
 }
 
 
-String getValue(String data, char separator, int index)
-{
+String getValue(String data, char separator, int index) {
   int found = 0;
   int strIndex[] = {0, -1};
   int maxIndex = data.length() - 1;
