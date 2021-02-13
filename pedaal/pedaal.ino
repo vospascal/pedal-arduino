@@ -19,19 +19,22 @@ int clutchValue = 0;
 int inputMapClutch[6] =  { 0, 20, 40, 60, 80, 100 };
 int outputMapClutch[6] = { 0, 20, 40, 60, 80, 100 };
 int ClutchBefore;
-float ClutchAfter;
+int ClutchAfter;
+int ClutchRaw;
 
 int throttleValue = 0;
 int inputMapThrottle[6] =  { 0, 20, 40, 60, 80, 100 };
 int outputMapThrottle[6] = { 0, 20, 40, 60, 80, 100 };
 int ThrottleBefore;
-float ThrottleAfter;
+int ThrottleAfter;
+int ThrottleRaw;
 
 int brakeValue = 0;
 int inputMapBrake[6] =  { 0, 20, 40, 60, 80, 100 };
 int outputMapBrake[6] = { 0, 20, 40, 60, 80, 100 };
 int BrakeBefore;
-float BrakeAfter;
+int BrakeAfter;
+int BrakeRaw;
 
 // the setup routine runs once when you press reset:
 void setup() {
@@ -67,7 +70,7 @@ void loop() {
   // read the input on analog pins
   int throttleRawValue = analogRead(A0);
   int brakeRawValue = analogRead(A3);
-  //  int brakePresureRawValue = analogRead(A2);
+  int brakePresureRawValue = analogRead(A2);
   int clutchRawValue = analogRead(A1);
 
   // print out the value you read:
@@ -79,6 +82,7 @@ void loop() {
     int restThrottleValue = throttleRawValue - 74;
     ThrottleBefore = restThrottleValue / 4;
     ThrottleAfter = multiMap<int>(ThrottleBefore, inputMapThrottle, outputMapThrottle, 6);
+    ThrottleRaw = throttleRawValue;
     Joystick.setThrottle(ThrottleAfter);
   }
 
@@ -90,6 +94,7 @@ void loop() {
     int restBrakeValue = brakeRawValue - 74;
     BrakeBefore = restBrakeValue / 4;
     BrakeAfter = multiMap<int>(BrakeBefore, inputMapBrake, outputMapBrake, 6);
+    BrakeRaw = brakeRawValue;
     Joystick.setBrake(BrakeAfter);
   }
 
@@ -101,6 +106,7 @@ void loop() {
     int restClutchValue = clutchRawValue - 74;
     ClutchBefore = restClutchValue / 4;
     ClutchAfter = multiMap<int>(ClutchBefore, inputMapClutch, outputMapClutch, 6);
+    ClutchRaw = clutchRawValue;
     Joystick.setZAxis(ClutchAfter);
   }
 
@@ -109,15 +115,15 @@ void loop() {
   String cm = ",";
 
   String throttleStringPrefix = "T:";
-  String throttleStringValues = ThrottleBefore + p1 + ThrottleAfter + cm;
+  String throttleStringValues = ThrottleBefore + p1 + ThrottleAfter + p1 + ThrottleRaw +cm;
   String throttleString = throttleStringPrefix + throttleStringValues;
 
   String brakeStringPrefix = "B:";
-  String brakeStringValues = BrakeBefore + p1 + BrakeAfter + cm;
+  String brakeStringValues = BrakeBefore + p1 + BrakeAfter + p1 + BrakeRaw + cm;
   String brakeString = brakeStringPrefix + brakeStringValues;
 
   String clutchStringPrefix = "C:";
-  String clutchStringValues = ClutchBefore + p1 + ClutchAfter + cm;
+  String clutchStringValues = ClutchBefore + p1 + ClutchAfter + p1 + ClutchRaw + cm;
   String clutchString = clutchStringPrefix + clutchStringValues;
 
   Serial.println(throttleString + brakeString + clutchString);
