@@ -23,7 +23,7 @@ Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID, JOYSTICK_TYPE_GAMEPAD,
 int clutchValue = 0;
 int inputMapClutch[6] =  { 0, 20, 40, 60, 80, 100 };
 int outputMapClutch[6] = { 0, 20, 40, 60, 80, 100 };
-int clutchCalibration[2] = {0, 1}; // low,high
+int clutchCalibration[4] = {0, 1023, 0, 0}; // calibration low, calibration high, deadzone low, deadzone high
 int ClutchBefore;
 int ClutchAfter;
 int ClutchRaw;
@@ -33,7 +33,7 @@ int ClutchAfterHID;
 int throttleValue = 0;
 int inputMapThrottle[6] =  { 0, 20, 40, 60, 80, 100 };
 int outputMapThrottle[6] = { 0, 20, 40, 60, 80, 100 };
-int throttleCalibration[2] = {0, 1}; // low,high
+int throttleCalibration[4] = {0, 1023, 0, 0}; // calibration low, calibration high, deadzone low, deadzone high
 int ThrottleBefore;
 int ThrottleAfter;
 int ThrottleRaw;
@@ -44,7 +44,7 @@ int ThrottleAfterHID;
 int brakeValue = 0;
 int inputMapBrake[6] =  { 0, 20, 40, 60, 80, 100 };
 int outputMapBrake[6] = { 0, 20, 40, 60, 80, 100 };
-int brakeCalibration[2] = {0, 1}; // low,high
+int brakeCalibration[4] = {0, 1023, 0, 0}; // calibration low, calibration high, deadzone low, deadzone high
 int BrakeBefore;
 int BrakeAfter;
 int BrakeRaw;
@@ -82,15 +82,22 @@ void loop() {
     if (msg.indexOf("GetCali") >= 0) {
       String tc0 = String(throttleCalibration[0]);
       String tc1 = String(throttleCalibration[1]);
-      String TCALI = "TCALI:" + tc0 + "-" + tc1;
+      String tc2 = String(throttleCalibration[2]);
+      String tc3 = String(throttleCalibration[3]);
+      String TCALI = "TCALI:" + tc0 + "-" + tc1 + "-" + tc2 + "-" + tc3;
 
       String bc0 = String(brakeCalibration[0]);
       String bc1 = String(brakeCalibration[1]);
-      String BCALI = "BCALI:" + bc0 + "-" + bc1;
+      String bc2 = String(brakeCalibration[2]);
+      String bc3 = String(brakeCalibration[3]);
+      String BCALI = "BCALI:" + bc0 + "-" + bc1 + "-" + bc2 + "-" + bc3;
 
       String cc0 = String(clutchCalibration[0]);
       String cc1 = String(clutchCalibration[1]);
-      String CCALI = "CCALI:" + cc0 + "-" + cc1;
+      String cc2 = String(clutchCalibration[2]);
+      String cc3 = String(clutchCalibration[3]);
+      String CCALI = "CCALI:" + cc0 + "-" + cc1 + "-" + cc2 + "-" + cc3;
+
       Serial.println(TCALI + cm + BCALI + cm + CCALI);
     }
 
@@ -108,7 +115,8 @@ void loop() {
   int clutchRawValue = analogRead(A1);
 
   // move most of else block to here
-  if (throttleRawValue <= throttleCalibration[0]) {
+  // throttleCalibration[4]  = calibration low, calibration high, deadzone low, deadzone high
+  if (throttleRawValue <= throttleCalibration[0] - throttleCalibration[2]) {
     ThrottleBefore = 0;
     ThrottleAfter = 0;
     Joystick.setThrottle(0);
@@ -122,20 +130,21 @@ void loop() {
     copyArray(outputMapThrottle, outputMapThrottleHID, 6);
     arrayMapMultiplier(outputMapThrottleHID, SENSOR_RANGE / 100);
 
-    ThrottleBeforeHID = map(throttleRawValue, throttleCalibration[0], throttleCalibration[1], 0, SENSOR_RANGE); // this upscales 500 -> 1023
+    ThrottleBeforeHID = map(throttleRawValue, throttleCalibration[0] + throttleCalibration[2], throttleCalibration[1] - throttleCalibration[3], 0, SENSOR_RANGE); // this upscales 500 -> 1023
     ThrottleAfterHID = multiMap<float>(ThrottleBeforeHID, inputMapThrottleHID, outputMapThrottleHID, 6);
+//
+//    Serial.println((String)ThrottleBeforeHID + " ThrottleBeforeHID");
+//    Serial.println((String)ThrottleAfterHID + " ThrottleAfterHID");
 
-    //    Serial.println((String)ThrottleBeforeHID + " ThrottleBeforeHID");
-    //    Serial.println((String)ThrottleAfterHID + " ThrottleAfterHID");
-
-    ThrottleBefore = map(throttleRawValue, throttleCalibration[0], throttleCalibration[1], 0, SERIAL_RANGE); // this downscales 500 -> 100
+    ThrottleBefore = map(throttleRawValue, throttleCalibration[0] + throttleCalibration[2], throttleCalibration[1] - throttleCalibration[3], 0, SERIAL_RANGE); // this downscales 500 -> 100
     ThrottleAfter = multiMap<int>(ThrottleBefore, inputMapThrottle, outputMapThrottle, 6);
 
     Joystick.setThrottle((int)ThrottleAfterHID);
   }
 
   // move most of else block to here
-  if (brakeRawValue <= brakeCalibration[0]) {
+  // brakeCalibration[4]  = calibration low, calibration high, deadzone low, deadzone high
+  if (brakeRawValue <= brakeCalibration[0] - brakeCalibration[2]) {
     BrakeBefore = 0;
     BrakeAfter = 0;
     Joystick.setBrake(0);
@@ -148,20 +157,21 @@ void loop() {
     copyArray(outputMapBrake, outputMapBrakeHID, 6);
     arrayMapMultiplier(outputMapBrakeHID, SENSOR_RANGE / 100);
 
-    BrakeBeforeHID = map(brakeRawValue, brakeCalibration[0], brakeCalibration[1], 0, SENSOR_RANGE); // this upscales 500 -> 1023
+    BrakeBeforeHID = map(brakeRawValue, brakeCalibration[0] + brakeCalibration[2], brakeCalibration[1] - brakeCalibration[3], 0, SENSOR_RANGE); // this upscales 500 -> 1023
     BrakeAfterHID = multiMap<float>(BrakeBeforeHID, inputMapBrakeHID, outputMapBrakeHID, 6);
+//
+//    Serial.println((String)BrakeBeforeHID + " BrakeBeforeHID");
+//    Serial.println((String)BrakeAfterHID + " BrakeAfterHID");
 
-    //    Serial.println((String)BrakeBeforeHID + " BrakeBeforeHID");
-    //    Serial.println((String)BrakeAfterHID + " BrakeAfterHID");
-
-    BrakeBefore = map(brakeRawValue, brakeCalibration[0], brakeCalibration[1], 0, SERIAL_RANGE); // this downscales 500 -> 100
+    BrakeBefore = map(brakeRawValue, brakeCalibration[0] + brakeCalibration[2], brakeCalibration[1] - brakeCalibration[3], 0, SERIAL_RANGE); // this downscales 500 -> 100
     BrakeAfter = multiMap<int>(BrakeBefore, inputMapBrake, outputMapBrake, 6);
 
     Joystick.setBrake((int)BrakeAfterHID);
   }
 
   // move most of else block to here
-  if (clutchRawValue <= clutchCalibration[0]) {
+  // clutchCalibration[4]  = calibration low, calibration high, deadzone low, deadzone high
+  if (clutchRawValue <= clutchCalibration[0] - clutchCalibration[2]) {
     ClutchBefore = 0;
     ClutchAfter = 0;
     Joystick.setZAxis(0);
@@ -174,13 +184,13 @@ void loop() {
     copyArray(outputMapClutch, outputMapClutchHID, 6);
     arrayMapMultiplier(outputMapClutchHID, SENSOR_RANGE / 100);
 
-    ClutchBeforeHID = map(clutchRawValue, clutchCalibration[0], clutchCalibration[1], 0, SENSOR_RANGE); // this upscales 500 -> 1023
+    ClutchBeforeHID = map(clutchRawValue, clutchCalibration[0] + clutchCalibration[2], clutchCalibration[1] - clutchCalibration[3], 0, SENSOR_RANGE); // this upscales 500 -> 1023
     ClutchAfterHID = multiMap<float>(ClutchBeforeHID, inputMapClutchHID, outputMapClutchHID, 6);
+//
+//    Serial.println((String)ClutchBeforeHID + " ClutchBeforeHID");
+//    Serial.println((String)ClutchAfterHID + " ClutchAfterHID");
 
-    //    Serial.println((String)ClutchBeforeHID + " ClutchBeforeHID");
-    //    Serial.println((String)ClutchAfterHID + " ClutchAfterHID");
-
-    ClutchBefore = map(clutchRawValue, clutchCalibration[0], clutchCalibration[1], 0, SERIAL_RANGE); // this downscales 500 -> 100
+    ClutchBefore = map(clutchRawValue, clutchCalibration[0] + clutchCalibration[2], clutchCalibration[1] - clutchCalibration[3], 0, SERIAL_RANGE); // this downscales 500 -> 100
     ClutchAfter = multiMap<int>(ClutchBefore, inputMapClutch, outputMapClutch, 6);
 
     Joystick.setZAxis((int)ClutchAfterHID);
@@ -206,7 +216,7 @@ void loop() {
   Serial.println(throttleString + brakeString + clutchString);
   Joystick.sendState(); // Update the Joystick status on the PC
   //  Serial.flush();
-  //      delay(150);
+//        delay(150);
 
   // timing
   //  unsigned long end = micros();
@@ -268,9 +278,9 @@ void loadEEPROMSettings() {
     writeStringToEEPROM(E_THROTTLE, generateStringMap(outputMapThrottle));
     writeStringToEEPROM(E_BRAKE, generateStringMap(outputMapBrake));
 
-    writeStringToEEPROM(E_CALIBRATION_C, "0-1");
-    writeStringToEEPROM(E_CALIBRATION_B, "0-1");
-    writeStringToEEPROM(E_CALIBRATION_T, "0-1");
+    writeStringToEEPROM(E_CALIBRATION_C, "0-1023-0-0");
+    writeStringToEEPROM(E_CALIBRATION_B, "0-1023-0-0");
+    writeStringToEEPROM(E_CALIBRATION_T, "0-1023-0-0");
   }
 
 }
@@ -322,16 +332,22 @@ void updateCalibration (String msg) {
     splitCCALI.replace("CCALI:", "");
     clutchCalibration[0] = getValue(splitCCALI, '-', 0).toInt();
     clutchCalibration[1] = getValue(splitCCALI, '-', 1).toInt();
+    clutchCalibration[2] = getValue(splitCCALI, '-', 2).toInt();
+    clutchCalibration[3] = getValue(splitCCALI, '-', 3).toInt();
 
     String splitBCALI = getValue(msg, ',', 1);
     splitBCALI.replace("BCALI:", "");
     brakeCalibration[0] = getValue(splitBCALI, '-', 0).toInt();
     brakeCalibration[1] = getValue(splitBCALI, '-', 1).toInt();
+    brakeCalibration[2] = getValue(splitBCALI, '-', 2).toInt();
+    brakeCalibration[3] = getValue(splitBCALI, '-', 3).toInt();
 
     String splitTCALI = getValue(msg, ',', 2);
     splitTCALI.replace("TCALI:", "");
     throttleCalibration[0] = getValue(splitTCALI, '-', 0).toInt();
     throttleCalibration[1] = getValue(splitTCALI, '-', 1).toInt();
+    throttleCalibration[2] = getValue(splitTCALI, '-', 2).toInt();
+    throttleCalibration[3] = getValue(splitTCALI, '-', 3).toInt();
 
     writeStringToEEPROM(E_CALIBRATION_C, splitCCALI);
     writeStringToEEPROM(E_CALIBRATION_B, splitBCALI);
