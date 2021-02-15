@@ -65,6 +65,9 @@ void setup() {
 
 // the loop routine runs over and over again forever:
 void loop() {
+  //  timing
+  //  unsigned long start = micros(); //4492 microseconds
+
   if (Serial.available() > 0) {
     String msg = Serial.readStringUntil('\n');
     String cm = ",";
@@ -104,7 +107,7 @@ void loop() {
   //  int brakePresureRawValue = analogRead(A2);
   int clutchRawValue = analogRead(A1);
 
-  // print out the value you read:
+  // move most of else block to here
   if (throttleRawValue <= throttleCalibration[0]) {
     ThrottleBefore = 0;
     ThrottleAfter = 0;
@@ -122,8 +125,8 @@ void loop() {
     ThrottleBeforeHID = map(throttleRawValue, throttleCalibration[0], throttleCalibration[1], 0, SENSOR_RANGE); // this upscales 500 -> 1023
     ThrottleAfterHID = multiMap<float>(ThrottleBeforeHID, inputMapThrottleHID, outputMapThrottleHID, 6);
 
-//    Serial.println((String)ThrottleBeforeHID + " ThrottleBeforeHID");
-//    Serial.println((String)ThrottleAfterHID + " ThrottleAfterHID");
+    //    Serial.println((String)ThrottleBeforeHID + " ThrottleBeforeHID");
+    //    Serial.println((String)ThrottleAfterHID + " ThrottleAfterHID");
 
     ThrottleBefore = map(throttleRawValue, throttleCalibration[0], throttleCalibration[1], 0, SERIAL_RANGE); // this downscales 500 -> 100
     ThrottleAfter = multiMap<int>(ThrottleBefore, inputMapThrottle, outputMapThrottle, 6);
@@ -131,6 +134,7 @@ void loop() {
     Joystick.setThrottle((int)ThrottleAfterHID);
   }
 
+  // move most of else block to here
   if (brakeRawValue <= brakeCalibration[0]) {
     BrakeBefore = 0;
     BrakeAfter = 0;
@@ -147,8 +151,8 @@ void loop() {
     BrakeBeforeHID = map(brakeRawValue, brakeCalibration[0], brakeCalibration[1], 0, SENSOR_RANGE); // this upscales 500 -> 1023
     BrakeAfterHID = multiMap<float>(BrakeBeforeHID, inputMapBrakeHID, outputMapBrakeHID, 6);
 
-//    Serial.println((String)BrakeBeforeHID + " BrakeBeforeHID");
-//    Serial.println((String)BrakeAfterHID + " BrakeAfterHID");
+    //    Serial.println((String)BrakeBeforeHID + " BrakeBeforeHID");
+    //    Serial.println((String)BrakeAfterHID + " BrakeAfterHID");
 
     BrakeBefore = map(brakeRawValue, brakeCalibration[0], brakeCalibration[1], 0, SERIAL_RANGE); // this downscales 500 -> 100
     BrakeAfter = multiMap<int>(BrakeBefore, inputMapBrake, outputMapBrake, 6);
@@ -156,6 +160,7 @@ void loop() {
     Joystick.setBrake((int)BrakeAfterHID);
   }
 
+  // move most of else block to here
   if (clutchRawValue <= clutchCalibration[0]) {
     ClutchBefore = 0;
     ClutchAfter = 0;
@@ -172,8 +177,8 @@ void loop() {
     ClutchBeforeHID = map(clutchRawValue, clutchCalibration[0], clutchCalibration[1], 0, SENSOR_RANGE); // this upscales 500 -> 1023
     ClutchAfterHID = multiMap<float>(ClutchBeforeHID, inputMapClutchHID, outputMapClutchHID, 6);
 
-//    Serial.println((String)ClutchBeforeHID + " ClutchBeforeHID");
-//    Serial.println((String)ClutchAfterHID + " ClutchAfterHID");
+    //    Serial.println((String)ClutchBeforeHID + " ClutchBeforeHID");
+    //    Serial.println((String)ClutchAfterHID + " ClutchAfterHID");
 
     ClutchBefore = map(clutchRawValue, clutchCalibration[0], clutchCalibration[1], 0, SERIAL_RANGE); // this downscales 500 -> 100
     ClutchAfter = multiMap<int>(ClutchBefore, inputMapClutch, outputMapClutch, 6);
@@ -187,21 +192,26 @@ void loop() {
   String cm = ",";
 
   String throttleStringPrefix = "T:";
-  String throttleStringValues = ThrottleBefore + p1 + ThrottleAfter + p1 + throttleRawValue + cm;
+  String throttleStringValues = ThrottleBefore + p1 + ThrottleAfter + p1 + throttleRawValue + p1 + ThrottleBeforeHID + cm;
   String throttleString = throttleStringPrefix + throttleStringValues;
 
   String brakeStringPrefix = "B:";
-  String brakeStringValues = BrakeBefore + p1 + BrakeAfter + p1 + brakeRawValue + cm;
+  String brakeStringValues = BrakeBefore + p1 + BrakeAfter + p1 + brakeRawValue + p1 + BrakeBeforeHID  + cm;
   String brakeString = brakeStringPrefix + brakeStringValues;
 
   String clutchStringPrefix = "C:";
-  String clutchStringValues = ClutchBefore + p1 + ClutchAfter + p1 + clutchRawValue + cm;
+  String clutchStringValues = ClutchBefore + p1 + ClutchAfter + p1 + clutchRawValue + p1 + ClutchBeforeHID + cm;
   String clutchString = clutchStringPrefix + clutchStringValues;
 
   Serial.println(throttleString + brakeString + clutchString);
   Joystick.sendState(); // Update the Joystick status on the PC
   //  Serial.flush();
-//      delay(150);
+  //      delay(150);
+
+  // timing
+  //  unsigned long end = micros();
+  //  unsigned long delta = end - start;
+  //  Serial.println(delta);
 }
 
 //---------------------------------------------------------
