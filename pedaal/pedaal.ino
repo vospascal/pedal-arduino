@@ -143,6 +143,7 @@ void loop() {
   ThrottleBefore = map(pedalOutputThrottle, lowDeadzoneThrottle, topDeadzoneThrottle, 0, SERIAL_RANGE); // this downscales 500 -> 100
   ThrottleAfter = multiMap<int>(ThrottleBefore, inputMapThrottle, outputMapThrottle, 6);
 
+  Joystick.setThrottle((int)ThrottleAfterHID);
   ////////////////////////////////////////////////////////////////////////////////
 
   int pedalOutputBrake;
@@ -174,6 +175,7 @@ void loop() {
   BrakeBefore = map(pedalOutputBrake, lowDeadzoneBrake, topDeadzoneBrake, 0, SERIAL_RANGE); // this downscales 500 -> 100
   BrakeAfter = multiMap<int>(BrakeBefore, inputMapBrake, outputMapBrake, 6);
 
+  Joystick.setBrake((int)BrakeAfterHID);
 
   ////////////////////////////////////////////////////////////////////////////////
 
@@ -206,6 +208,9 @@ void loop() {
   ClutchBefore = map(pedalOutputClutch, lowDeadzoneClutch, topDeadzoneClutch, 0, SERIAL_RANGE); // this downscales 500 -> 100
   ClutchAfter = multiMap<int>(ClutchBefore, inputMapClutch, outputMapClutch, 6);
 
+  Joystick.setZAxis((int)ClutchAfterHID);
+
+  ////////////////////////////////////////////////////////////////////////////////
 
   String p1 = ";";
   String cm = ",";
