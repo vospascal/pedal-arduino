@@ -113,85 +113,98 @@ void loop() {
   //  int brakePresureRawValue = analogRead(A2);
   int clutchRawValue = analogRead(A1);
 
-  // move most of else block to here
-  if (throttleRawValue <= throttleCalibration[0]) {
-    ThrottleBefore = 0;
-    ThrottleAfter = 0;
-    Joystick.setThrottle(0);
-  } else {
+  ////////////////////////////////////////////////////////////////////////////////
+  int pedalOutputThrottle;
+  int lowDeadzoneThrottle = (throttleCalibration[0] > throttleCalibration[2]) ? throttleCalibration[0] : throttleCalibration[2];
+  int topDeadzoneThrottle = (throttleCalibration[1] < throttleCalibration[3]) ? throttleCalibration[1] : throttleCalibration[3];
 
-    float inputMapThrottleHID[6] = {};
-    copyArray(inputMapThrottle, inputMapThrottleHID, 6);
-    arrayMapMultiplier(inputMapThrottleHID, SENSOR_RANGE / 100);
-
-    float outputMapThrottleHID[6] = {};
-    copyArray(outputMapThrottle, outputMapThrottleHID, 6);
-    arrayMapMultiplier(outputMapThrottleHID, SENSOR_RANGE / 100);
-
-    ThrottleBeforeHID = map(throttleRawValue, throttleCalibration[0], throttleCalibration[1], 0, SENSOR_RANGE); // this upscales 500 -> 1023
-    ThrottleAfterHID = multiMap<float>(ThrottleBeforeHID, inputMapThrottleHID, outputMapThrottleHID, 6);
-    //
-    //    Serial.println((String)ThrottleBeforeHID + " ThrottleBeforeHID");
-    //    Serial.println((String)ThrottleAfterHID + " ThrottleAfterHID");
-
-    ThrottleBefore = map(throttleRawValue, throttleCalibration[0], throttleCalibration[1], 0, SERIAL_RANGE); // this downscales 500 -> 100
-    ThrottleAfter = multiMap<int>(ThrottleBefore, inputMapThrottle, outputMapThrottle, 6);
-
-    Joystick.setThrottle((int)ThrottleAfterHID);
+  if (throttleRawValue > topDeadzoneThrottle) {
+    pedalOutputThrottle = topDeadzoneThrottle;
+  }
+  else if (throttleRawValue < lowDeadzoneThrottle) {
+    pedalOutputThrottle = lowDeadzoneThrottle;
+  }
+  else {
+    pedalOutputThrottle = throttleRawValue;
   }
 
-  // move most of else block to here
-  if (brakeRawValue <= brakeCalibration[0]) {
-    BrakeBefore = 0;
-    BrakeAfter = 0;
-    Joystick.setBrake(0);
-  } else {
-    float inputMapBrakeHID[6] = {};
-    copyArray(inputMapBrake, inputMapBrakeHID, 6);
-    arrayMapMultiplier(inputMapBrakeHID, SENSOR_RANGE / 100);
+  float inputMapThrottleHID[6] = {};
+  copyArray(inputMapThrottle, inputMapThrottleHID, 6);
+  arrayMapMultiplier(inputMapThrottleHID, (SENSOR_RANGE / 100));
 
-    float outputMapBrakeHID[6] = {};
-    copyArray(outputMapBrake, outputMapBrakeHID, 6);
-    arrayMapMultiplier(outputMapBrakeHID, SENSOR_RANGE / 100);
+  float outputMapThrottleHID[6] = {};
+  copyArray(outputMapThrottle, outputMapThrottleHID, 6);
+  arrayMapMultiplier(outputMapThrottleHID, (SENSOR_RANGE / 100));
 
-    BrakeBeforeHID = map(brakeRawValue, brakeCalibration[0], brakeCalibration[1], 0, SENSOR_RANGE); // this upscales 500 -> 1023
-    BrakeAfterHID = multiMap<float>(BrakeBeforeHID, inputMapBrakeHID, outputMapBrakeHID, 6);
+  //map(value, fromLow, fromHigh, toLow, toHigh)
+  ThrottleBeforeHID = map(pedalOutputThrottle, lowDeadzoneThrottle, topDeadzoneThrottle, 0, SENSOR_RANGE); // this upscales 500 -> 1023
+  ThrottleAfterHID = multiMap<float>(ThrottleBeforeHID, inputMapThrottleHID, outputMapThrottleHID, 6);
 
-    //    Serial.println((String)BrakeBeforeHID + " BrakeBeforeHID");
-    //    Serial.println((String)BrakeAfterHID + " BrakeAfterHID");
+  ThrottleBefore = map(pedalOutputThrottle, lowDeadzoneThrottle, topDeadzoneThrottle, 0, SERIAL_RANGE); // this downscales 500 -> 100
+  ThrottleAfter = multiMap<int>(ThrottleBefore, inputMapThrottle, outputMapThrottle, 6);
 
-    BrakeBefore = map(brakeRawValue, brakeCalibration[0], brakeCalibration[1], 0, SERIAL_RANGE); // this downscales 500 -> 100
-    BrakeAfter = multiMap<int>(BrakeBefore, inputMapBrake, outputMapBrake, 6);
+  ////////////////////////////////////////////////////////////////////////////////
 
-    Joystick.setBrake((int)BrakeAfterHID);
+  int pedalOutputBrake;
+  int lowDeadzoneBrake = (brakeCalibration[0] > brakeCalibration[2]) ? brakeCalibration[0] : brakeCalibration[2];
+  int topDeadzoneBrake = (brakeCalibration[1] < brakeCalibration[3]) ? brakeCalibration[1] : brakeCalibration[3];
+
+  if (brakeRawValue > topDeadzoneBrake) {
+    pedalOutputBrake = topDeadzoneBrake;
+  }
+  else if (brakeRawValue < lowDeadzoneBrake) {
+    pedalOutputBrake = lowDeadzoneBrake;
+  }
+  else {
+    pedalOutputBrake = brakeRawValue;
   }
 
-  // move most of else block to here
-  if (clutchRawValue <= clutchCalibration[0]) {
-    ClutchBefore = 0;
-    ClutchAfter = 0;
-    Joystick.setZAxis(0);
-  } else {
-    float inputMapClutchHID[6] = {};
-    copyArray(inputMapClutch, inputMapClutchHID, 6);
-    arrayMapMultiplier(inputMapClutchHID, SENSOR_RANGE / 100);
+  float inputMapBrakeHID[6] = {};
+  copyArray(inputMapBrake, inputMapBrakeHID, 6);
+  arrayMapMultiplier(inputMapBrakeHID, (SENSOR_RANGE / 100));
 
-    float outputMapClutchHID[6] = {};
-    copyArray(outputMapClutch, outputMapClutchHID, 6);
-    arrayMapMultiplier(outputMapClutchHID, SENSOR_RANGE / 100);
+  float outputMapBrakeHID[6] = {};
+  copyArray(outputMapBrake, outputMapBrakeHID, 6);
+  arrayMapMultiplier(outputMapBrakeHID, (SENSOR_RANGE / 100));
 
-    ClutchBeforeHID = map(clutchRawValue, clutchCalibration[0], clutchCalibration[1], 0, SENSOR_RANGE); // this upscales 500 -> 1023
-    ClutchAfterHID = multiMap<float>(ClutchBeforeHID, inputMapClutchHID, outputMapClutchHID, 6);
+  //map(value, fromLow, fromHigh, toLow, toHigh)
+  BrakeBeforeHID = map(pedalOutputBrake, lowDeadzoneBrake, topDeadzoneBrake, 0, SENSOR_RANGE); // this upscales 500 -> 1023
+  BrakeAfterHID = multiMap<float>(BrakeBeforeHID, inputMapBrakeHID, outputMapBrakeHID, 6);
 
-    //    Serial.println((String)ClutchBeforeHID + " ClutchBeforeHID");
-    //    Serial.println((String)ClutchAfterHID + " ClutchAfterHID");
+  BrakeBefore = map(pedalOutputBrake, lowDeadzoneBrake, topDeadzoneBrake, 0, SERIAL_RANGE); // this downscales 500 -> 100
+  BrakeAfter = multiMap<int>(BrakeBefore, inputMapBrake, outputMapBrake, 6);
 
-    ClutchBefore = map(clutchRawValue, clutchCalibration[0], clutchCalibration[1], 0, SERIAL_RANGE); // this downscales 500 -> 100
-    ClutchAfter = multiMap<int>(ClutchBefore, inputMapClutch, outputMapClutch, 6);
 
-    Joystick.setZAxis((int)ClutchAfterHID);
+  ////////////////////////////////////////////////////////////////////////////////
 
+  int pedalOutputClutch;
+  int lowDeadzoneClutch = (clutchCalibration[0] > clutchCalibration[2]) ? clutchCalibration[0] : clutchCalibration[2];
+  int topDeadzoneClutch = (clutchCalibration[1] < clutchCalibration[3]) ? clutchCalibration[1] : clutchCalibration[3];
+
+  if (clutchRawValue > topDeadzoneClutch) {
+    pedalOutputClutch = topDeadzoneClutch;
   }
+  else if (clutchRawValue < lowDeadzoneClutch) {
+    pedalOutputClutch = lowDeadzoneClutch;
+  }
+  else {
+    pedalOutputClutch = clutchRawValue;
+  }
+
+  float inputMapClutchHID[6] = {};
+  copyArray(inputMapClutch, inputMapClutchHID, 6);
+  arrayMapMultiplier(inputMapClutchHID, (SENSOR_RANGE / 100));
+
+  float outputMapClutchHID[6] = {};
+  copyArray(outputMapClutch, outputMapClutchHID, 6);
+  arrayMapMultiplier(outputMapClutchHID, (SENSOR_RANGE / 100));
+
+  //map(value, fromLow, fromHigh, toLow, toHigh)
+  ClutchBeforeHID = map(pedalOutputClutch, lowDeadzoneClutch, topDeadzoneClutch, 0, SENSOR_RANGE); // this upscales 500 -> 1023
+  ClutchAfterHID = multiMap<float>(ClutchBeforeHID, inputMapClutchHID, outputMapClutchHID, 6);
+
+  ClutchBefore = map(pedalOutputClutch, lowDeadzoneClutch, topDeadzoneClutch, 0, SERIAL_RANGE); // this downscales 500 -> 100
+  ClutchAfter = multiMap<int>(ClutchBefore, inputMapClutch, outputMapClutch, 6);
 
 
   String p1 = ";";
