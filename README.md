@@ -1,5 +1,5 @@
 ## pedal-gui-arduino
-arduino side to client gui found here https://github.com/vospascal/pedal-gui-javafx-jpackage/
+arduino side to client gui found here https://github.com/vospascal/pedal-gui
 
 ## help
 If you want to develop the software furter please create a pull request or create an issue
