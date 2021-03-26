@@ -5,7 +5,7 @@ arduino side to client gui found here https://github.com/vospascal/pedal-gui
 If you want to develop the software furter please create a pull request or create an issue
 
 ## if you like it
-like it leaving a star
+please leave a star
 
 ## if you realy like it
 if you like it you can donate further developent
