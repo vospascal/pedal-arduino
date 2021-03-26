@@ -56,8 +56,13 @@ int BrakeAfterHID;
 
 // the setup routine runs once when you press reset:
 void setup() {
-  // initialize serial communication at 9600 bits per second:
+  // initialize serial communication at 115200 bits per second:
   Serial.begin(115200);
+
+  // uncomment this line and upload to reset to factory settings
+  // then uncomment it and upload again so settings will be stored
+  // EEPROM.write(E_INIT, 'R');
+
   loadEEPROMSettings();
   Joystick.begin();
   Joystick.setThrottle(throttleValue);
