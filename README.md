@@ -11,7 +11,7 @@ https://www.paypal.com/donate?business=TBPE6XCB2XBMW&item_name=pedalbox&currency
 add this to your arduino boards.text
 
 location example  [yourinstallationdirectory]\arduino-1.8.13\hardware\arduino\avr\boards.txt
-``
+```
 ##############################################################
 
 micro.name=PedalBox
@@ -57,7 +57,7 @@ micro.build.variant=micro
 micro.build.extra_flags={build.usb_flags}
 
 ##############################################################
-``
+```
 
 
 # pedal-arduino
