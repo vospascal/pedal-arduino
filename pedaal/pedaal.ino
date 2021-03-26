@@ -109,9 +109,24 @@ void loop() {
 
   // read the input on analog pins
   int throttleRawValue = analogRead(A0);
+  int throttleInverted = false;
   int brakeRawValue = analogRead(A3);
+  int brakeInverted = false;
   //  int brakePresureRawValue = analogRead(A2);
   int clutchRawValue = analogRead(A1);
+  int clutchInverted = false;
+
+  if (throttleInverted) {
+    throttleRawValue = SENSOR_RANGE - throttleRawValue;
+  }
+
+  if (brakeInverted) {
+    brakeRawValue = SENSOR_RANGE - brakeRawValue;
+  }
+
+  if (clutchInverted) {
+    clutchRawValue = SENSOR_RANGE - clutchRawValue;
+  }
 
   ////////////////////////////////////////////////////////////////////////////////
   int pedalOutputThrottle;
