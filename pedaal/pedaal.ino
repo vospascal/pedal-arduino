@@ -9,6 +9,7 @@
 #define E_CALIBRATION_C 90
 #define E_CALIBRATION_B 120
 #define E_CALIBRATION_T 150
+#define E_PEDAL_INVERTED_MAP 200
 #define SENSOR_RANGE 1023
 #define SERIAL_RANGE 100
 
@@ -20,6 +21,7 @@ Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID, JOYSTICK_TYPE_GAMEPAD,
                    false, true, false);  // accelerator, brake, or steering
 
 int clutchValue = 0;
+int clutchInverted = 0; //0 = false / 1 - true
 int inputMapClutch[6] =  { 0, 20, 40, 60, 80, 100 };
 int outputMapClutch[6] = { 0, 20, 40, 60, 80, 100 };
 int clutchCalibration[4] = {0, 1023, 0, 1023}; // calibration low, calibration high, deadzone low, deadzone high
@@ -30,6 +32,7 @@ int ClutchBeforeHID;
 int ClutchAfterHID;
 
 int throttleValue = 0;
+int throttleInverted = 0; //0 = false / 1 - true
 int inputMapThrottle[6] =  { 0, 20, 40, 60, 80, 100 };
 int outputMapThrottle[6] = { 0, 20, 40, 60, 80, 100 };
 int throttleCalibration[4] = {0, 1023, 0, 1023}; // calibration low, calibration high, deadzone low, deadzone high
@@ -41,6 +44,7 @@ int ThrottleAfterHID;
 
 
 int brakeValue = 0;
+int brakeInverted = 0; //0 = false / 1 - true
 int inputMapBrake[6] =  { 0, 20, 40, 60, 80, 100 };
 int outputMapBrake[6] = { 0, 20, 40, 60, 80, 100 };
 int brakeCalibration[4] = {0, 1023, 0, 1023}; // calibration low, calibration high, deadzone low, deadzone high
@@ -70,6 +74,8 @@ void loop() {
   if (Serial.available() > 0) {
     String msg = Serial.readStringUntil('\n');
     String cm = ",";
+    String dash = "-";
+
 
     if (msg.indexOf("GetMap") >= 0) {
       String TMAP = "TMAP:" + generateStringMap(outputMapThrottle);
@@ -78,24 +84,29 @@ void loop() {
       Serial.println(TMAP + cm + BMAP + cm + CMAP);
     }
 
+    if (msg.indexOf("GetInverted") >= 0) {
+      String INVER = "INVER:";
+      Serial.println(INVER + throttleInverted + dash + brakeInverted + dash + clutchInverted);
+    }
+
     if (msg.indexOf("GetCali") >= 0) {
       String tc0 = String(throttleCalibration[0]);
       String tc1 = String(throttleCalibration[1]);
       String tc2 = String(throttleCalibration[2]);
       String tc3 = String(throttleCalibration[3]);
-      String TCALI = "TCALI:" + tc0 + "-" + tc1 + "-" + tc2 + "-" + tc3;
+      String TCALI = "TCALI:" + tc0 + dash + tc1 + dash + tc2 + dash + tc3;
 
       String bc0 = String(brakeCalibration[0]);
       String bc1 = String(brakeCalibration[1]);
       String bc2 = String(brakeCalibration[2]);
       String bc3 = String(brakeCalibration[3]);
-      String BCALI = "BCALI:" + bc0 + "-" + bc1 + "-" + bc2 + "-" + bc3;
+      String BCALI = "BCALI:" + bc0 + dash + bc1 + dash + bc2 + dash + bc3;
 
       String cc0 = String(clutchCalibration[0]);
       String cc1 = String(clutchCalibration[1]);
       String cc2 = String(clutchCalibration[2]);
       String cc3 = String(clutchCalibration[3]);
-      String CCALI = "CCALI:" + cc0 + "-" + cc1 + "-" + cc2 + "-" + cc3;
+      String CCALI = "CCALI:" + cc0 + dash + cc1 + dash + cc2 + dash + cc3;
 
       Serial.println(TCALI + cm + BCALI + cm + CCALI);
     }
@@ -104,27 +115,25 @@ void loop() {
     updateBrakeMap(msg);
     updateClutchMap(msg);
     updateCalibration(msg);
+    updateInverted(msg);
   }
 
 
   // read the input on analog pins
   int throttleRawValue = analogRead(A0);
-  int throttleInverted = false;
   int brakeRawValue = analogRead(A3);
-  int brakeInverted = false;
   //  int brakePresureRawValue = analogRead(A2);
   int clutchRawValue = analogRead(A1);
-  int clutchInverted = false;
 
-  if (throttleInverted) {
+  if (throttleInverted == 1) {
     throttleRawValue = SENSOR_RANGE - throttleRawValue;
   }
 
-  if (brakeInverted) {
+  if (brakeInverted == 1) {
     brakeRawValue = SENSOR_RANGE - brakeRawValue;
   }
 
-  if (clutchInverted) {
+  if (clutchInverted == 1) {
     clutchRawValue = SENSOR_RANGE - clutchRawValue;
   }
 
@@ -245,7 +254,7 @@ void loop() {
   Serial.println(throttleString + brakeString + clutchString);
   Joystick.sendState(); // Update the Joystick status on the PC
   //  Serial.flush();
-  //      delay(150);
+        delay(150);
 
   // timing
   //  unsigned long end = micros();
@@ -287,6 +296,9 @@ void loadEEPROMSettings() {
     String BMAP = "BMAP:";
     updateBrakeMap(BMAP + EEPROM_BrakeMap);
 
+    String EEPROM_InvertedMap = readStringFromEEPROM(E_PEDAL_INVERTED_MAP);
+    String INVER = "INVER:";
+    updateInverted(INVER + EEPROM_InvertedMap);
 
     String cm = ",";
     String EEPROM_ClutchCalibration = readStringFromEEPROM(E_CALIBRATION_C);
@@ -306,6 +318,10 @@ void loadEEPROMSettings() {
     writeStringToEEPROM(E_CLUTCH, generateStringMap(outputMapClutch));
     writeStringToEEPROM(E_THROTTLE, generateStringMap(outputMapThrottle));
     writeStringToEEPROM(E_BRAKE, generateStringMap(outputMapBrake));
+
+    //inverted  throttleInverted brakeInverted clutchInverted
+    // 0 = false / 1 = true
+    writeStringToEEPROM(E_PEDAL_INVERTED_MAP, "0-0-0");
 
     writeStringToEEPROM(E_CALIBRATION_C, "0-1023-0-1023");
     writeStringToEEPROM(E_CALIBRATION_B, "0-1023-0-1023");
@@ -353,6 +369,18 @@ String generateStringMap(int *list) {
   }
   return String(output);
 
+}
+
+void updateInverted (String msg) {
+  if (msg.indexOf("INVER:") >= 0) {
+    Serial.println(msg);
+    String splitINVER = getValue(msg, ',', 0);
+    splitINVER.replace("INVER:", "");
+    throttleInverted = getValue(splitINVER, '-', 0).toInt();
+    brakeInverted = getValue(splitINVER, '-', 1).toInt();
+    clutchInverted = getValue(splitINVER, '-', 2).toInt();
+    writeStringToEEPROM(E_PEDAL_INVERTED_MAP, splitINVER);
+  }
 }
 
 void updateCalibration (String msg) {
