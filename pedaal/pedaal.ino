@@ -259,7 +259,7 @@ void loop() {
   Serial.println(throttleString + brakeString + clutchString);
   Joystick.sendState(); // Update the Joystick status on the PC
   //  Serial.flush();
-        delay(150);
+//        delay(150);
 
   // timing
   //  unsigned long end = micros();
