@@ -256,12 +256,15 @@ void loop() {
   String clutchStringValues = ClutchBefore + p1 + ClutchAfter + p1 + clutchRawValue + p1 + ClutchBeforeHID + cm;
   String clutchString = clutchStringPrefix + clutchStringValues;
 
-  Serial.println(throttleString + brakeString + clutchString);
-  Joystick.sendState(); // Update the Joystick status on the PC
-  //  Serial.flush();
-//        delay(150);
 
-  // timing
+  Joystick.sendState(); // Update the Joystick status on the PC
+
+  if (Serial.availableForWrite ()) {
+    Serial.println(throttleString + brakeString + clutchString);
+  }
+
+  // delay(150);
+  //  timing
   //  unsigned long end = micros();
   //  unsigned long delta = end - start;
   //  Serial.println(delta);
