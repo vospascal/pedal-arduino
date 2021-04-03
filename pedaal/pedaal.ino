@@ -3,6 +3,12 @@
 #include "SoftwareReset.h"
 #include <EEPROM.h>
 
+#include "UtilLibrary.h"
+
+// init util library
+UtilLib utilLib;
+
+
 #define E_INIT 1023
 #define E_CLUTCH 0
 #define E_THROTTLE 30
@@ -129,12 +135,12 @@ void loop() {
   }
 
   float inputMapThrottleHID[6] = {};
-  copyArray(inputMapThrottle, inputMapThrottleHID, 6);
-  arrayMapMultiplier(inputMapThrottleHID, (SENSOR_RANGE / 100));
+  utilLib.copyArray(inputMapThrottle, inputMapThrottleHID, 6);
+  utilLib.arrayMapMultiplier(inputMapThrottleHID, (SENSOR_RANGE / 100));
 
   float outputMapThrottleHID[6] = {};
-  copyArray(outputMapThrottle, outputMapThrottleHID, 6);
-  arrayMapMultiplier(outputMapThrottleHID, (SENSOR_RANGE / 100));
+  utilLib.copyArray(outputMapThrottle, outputMapThrottleHID, 6);
+  utilLib.arrayMapMultiplier(outputMapThrottleHID, (SENSOR_RANGE / 100));
 
   //map(value, fromLow, fromHigh, toLow, toHigh)
   ThrottleBeforeHID = map(pedalOutputThrottle, lowDeadzoneThrottle, topDeadzoneThrottle, 0, SENSOR_RANGE); // this upscales 500 -> 1023
@@ -161,12 +167,12 @@ void loop() {
   }
 
   float inputMapBrakeHID[6] = {};
-  copyArray(inputMapBrake, inputMapBrakeHID, 6);
-  arrayMapMultiplier(inputMapBrakeHID, (SENSOR_RANGE / 100));
+  utilLib.copyArray(inputMapBrake, inputMapBrakeHID, 6);
+  utilLib.arrayMapMultiplier(inputMapBrakeHID, (SENSOR_RANGE / 100));
 
   float outputMapBrakeHID[6] = {};
-  copyArray(outputMapBrake, outputMapBrakeHID, 6);
-  arrayMapMultiplier(outputMapBrakeHID, (SENSOR_RANGE / 100));
+  utilLib.copyArray(outputMapBrake, outputMapBrakeHID, 6);
+  utilLib.arrayMapMultiplier(outputMapBrakeHID, (SENSOR_RANGE / 100));
 
   //map(value, fromLow, fromHigh, toLow, toHigh)
   BrakeBeforeHID = map(pedalOutputBrake, lowDeadzoneBrake, topDeadzoneBrake, 0, SENSOR_RANGE); // this upscales 500 -> 1023
@@ -194,12 +200,12 @@ void loop() {
   }
 
   float inputMapClutchHID[6] = {};
-  copyArray(inputMapClutch, inputMapClutchHID, 6);
-  arrayMapMultiplier(inputMapClutchHID, (SENSOR_RANGE / 100));
+  utilLib.copyArray(inputMapClutch, inputMapClutchHID, 6);
+  utilLib.arrayMapMultiplier(inputMapClutchHID, (SENSOR_RANGE / 100));
 
   float outputMapClutchHID[6] = {};
-  copyArray(outputMapClutch, outputMapClutchHID, 6);
-  arrayMapMultiplier(outputMapClutchHID, (SENSOR_RANGE / 100));
+  utilLib.copyArray(outputMapClutch, outputMapClutchHID, 6);
+  utilLib.arrayMapMultiplier(outputMapClutchHID, (SENSOR_RANGE / 100));
 
   //map(value, fromLow, fromHigh, toLow, toHigh)
   ClutchBeforeHID = map(pedalOutputClutch, lowDeadzoneClutch, topDeadzoneClutch, 0, SENSOR_RANGE); // this upscales 500 -> 1023
@@ -241,22 +247,6 @@ void loop() {
   //  Serial.println(delta);
 }
 
-//---------------------------------------------------------
-
-void arrayMapMultiplier(float *list, float multipier) {
-  list[0] = (int)(list[0] * multipier);
-  list[1] = (int)(list[1] * multipier);
-  list[2] = (int)(list[2] * multipier);
-  list[3] = (int)(list[3] * multipier);
-  list[4] = (int)(list[4] * multipier);
-  list[5] = (int)(list[5] * multipier);
-}
-
-void copyArray(int* src, float* dst, int len) {
-  for (int i = 0; i < len; i++) {
-    *dst++ = *src++;
-  }
-}
 
 //---------------------------------------------------------
 
@@ -269,34 +259,32 @@ void loadEEPROMSettings() {
   }
 }
 
-
-
 void loadDeviceSettings() {
     //read
-    String EEPROM_ClutchMap = readStringFromEEPROM(E_CLUTCH);
+    String EEPROM_ClutchMap = utilLib.readStringFromEEPROM(E_CLUTCH);
     String CMAP = "CMAP:";
     updateClutchMap(CMAP + EEPROM_ClutchMap);
 
-    String EEPROM_ThrottleMap = readStringFromEEPROM(E_THROTTLE);
+    String EEPROM_ThrottleMap = utilLib.readStringFromEEPROM(E_THROTTLE);
     String TMAP = "TMAP:";
     updateThrottleMap(TMAP + EEPROM_ThrottleMap);
 
-    String EEPROM_BrakeMap = readStringFromEEPROM(E_BRAKE);
+    String EEPROM_BrakeMap = utilLib.readStringFromEEPROM(E_BRAKE);
     String BMAP = "BMAP:";
     updateBrakeMap(BMAP + EEPROM_BrakeMap);
 
-    String EEPROM_InvertedMap = readStringFromEEPROM(E_PEDAL_INVERTED_MAP);
+    String EEPROM_InvertedMap = utilLib.readStringFromEEPROM(E_PEDAL_INVERTED_MAP);
     String INVER = "INVER:";
     updateInverted(INVER + EEPROM_InvertedMap);
 
     String cm = ",";
-    String EEPROM_ClutchCalibration = readStringFromEEPROM(E_CALIBRATION_C);
+    String EEPROM_ClutchCalibration = utilLib.readStringFromEEPROM(E_CALIBRATION_C);
     String CCALI = "CCALI:";
 
-    String EEPROM_BrakeCalibration = readStringFromEEPROM(E_CALIBRATION_B);
+    String EEPROM_BrakeCalibration = utilLib.readStringFromEEPROM(E_CALIBRATION_B);
     String BCALI = "BCALI:";
 
-    String EEPROM_ThrottleCalibration = readStringFromEEPROM(E_CALIBRATION_T);
+    String EEPROM_ThrottleCalibration = utilLib.readStringFromEEPROM(E_CALIBRATION_T);
     String TCALI = "TCALI:";
 
     updateCalibration(CCALI + EEPROM_ClutchCalibration + cm + BCALI + EEPROM_BrakeCalibration + cm + TCALI + EEPROM_ThrottleCalibration);
@@ -307,88 +295,47 @@ void resetDeviceSettings(){
     // write
     EEPROM.write(E_INIT, 'T');
     int outputMap[6] =  { 0, 20, 40, 60, 80, 100 };
-    writeStringToEEPROM(E_CLUTCH, generateStringMap(outputMap));
-    writeStringToEEPROM(E_THROTTLE, generateStringMap(outputMap));
-    writeStringToEEPROM(E_BRAKE, generateStringMap(outputMap));
+    utilLib.writeStringToEEPROM(E_CLUTCH, utilLib.generateStringMap(outputMap));
+    utilLib.writeStringToEEPROM(E_THROTTLE, utilLib.generateStringMap(outputMap));
+    utilLib.writeStringToEEPROM(E_BRAKE, utilLib.generateStringMap(outputMap));
 
     //inverted  throttleInverted brakeInverted clutchInverted
     // 0 = false / 1 = true
-    writeStringToEEPROM(E_PEDAL_INVERTED_MAP, "0-0-0");
+    utilLib.writeStringToEEPROM(E_PEDAL_INVERTED_MAP, "0-0-0");
 
-    writeStringToEEPROM(E_CALIBRATION_C, "0-1023-0-1023");
-    writeStringToEEPROM(E_CALIBRATION_B, "0-1023-0-1023");
-    writeStringToEEPROM(E_CALIBRATION_T, "0-1023-0-1023");
+    utilLib.writeStringToEEPROM(E_CALIBRATION_C, "0-1023-0-1023");
+    utilLib.writeStringToEEPROM(E_CALIBRATION_B, "0-1023-0-1023");
+    utilLib.writeStringToEEPROM(E_CALIBRATION_T, "0-1023-0-1023");
 
     softwareReset::standard();
 }
 
-void writeStringToEEPROM(int addrOffset, const String &strToWrite)
-{
-  byte len = strToWrite.length();
-  //  Serial.println(len);
-  EEPROM.write(addrOffset, len);
-  for (int i = 0; i < len; i++)
-  {
-    EEPROM.write(addrOffset + 1 + i, strToWrite[i]);
-  }
-}
-
-String readStringFromEEPROM(int addrOffset)
-{
-  int newStrLen = EEPROM.read(addrOffset);
-  char data[newStrLen + 1];
-  for (int i = 0; i < newStrLen; i++)
-  {
-    data[i] = EEPROM.read(addrOffset + 1 + i);
-  }
-  data[newStrLen] = '\0'; // the character may appear in a weird way, you should read: 'only one backslash and 0'
-  return String(data);
-}
-
-
-//---------------------------------------------------------
-
-String generateStringMap(int *list) {
-  String output;
-  for (int i = 0; i < 6; i++) {
-    if (i < 5) {
-      output += String(list[i]) + "-";
-    }
-    if (i == 5) {
-      output += String(list[i]);
-    }
-    //    output += String(list[i]) += String(",");
-  }
-  return String(output);
-
-}
-
 void updateCalibration (String msg) {
     if (msg.indexOf("CCALI:") >= 0 && msg.indexOf("BCALI:") >= 0 && msg.indexOf("TCALI:") >= 0) {
-        String splitCCALI = getValue(msg, ',', 0);
+        String splitCCALI = utilLib.getValue(msg, ',', 0);
         splitCCALI.replace("CCALI:", "");
-        clutchCalibration[0] = getValue(splitCCALI, '-', 0).toInt();
-        clutchCalibration[1] = getValue(splitCCALI, '-', 1).toInt();
-        clutchCalibration[2] = getValue(splitCCALI, '-', 2).toInt();
-        clutchCalibration[3] = getValue(splitCCALI, '-', 3).toInt();
+        clutchCalibration[0] = utilLib.getValue(splitCCALI, '-', 0).toInt();
+        clutchCalibration[1] = utilLib.getValue(splitCCALI, '-', 1).toInt();
+        clutchCalibration[2] = utilLib.getValue(splitCCALI, '-', 2).toInt();
+        clutchCalibration[3] = utilLib.getValue(splitCCALI, '-', 3).toInt();
 
-        String splitBCALI = getValue(msg, ',', 1);
+        String splitBCALI = utilLib.getValue(msg, ',', 1);
         splitBCALI.replace("BCALI:", "");
-        brakeCalibration[0] = getValue(splitBCALI, '-', 0).toInt();
-        brakeCalibration[1] = getValue(splitBCALI, '-', 1).toInt();
-        brakeCalibration[2] = getValue(splitBCALI, '-', 2).toInt();
-        brakeCalibration[3] = getValue(splitBCALI, '-', 3).toInt();
+        brakeCalibration[0] = utilLib.getValue(splitBCALI, '-', 0).toInt();
+        brakeCalibration[1] = utilLib.getValue(splitBCALI, '-', 1).toInt();
+        brakeCalibration[2] = utilLib.getValue(splitBCALI, '-', 2).toInt();
+        brakeCalibration[3] = utilLib.getValue(splitBCALI, '-', 3).toInt();
 
-        String splitTCALI = getValue(msg, ',', 2);
+        String splitTCALI = utilLib.getValue(msg, ',', 2);
         splitTCALI.replace("TCALI:", "");
-        throttleCalibration[0] = getValue(splitTCALI, '-', 0).toInt();
-        throttleCalibration[1] = getValue(splitTCALI, '-', 1).toInt();
-        throttleCalibration[2] = getValue(splitTCALI, '-', 2).toInt();
-        throttleCalibration[3] = getValue(splitTCALI, '-', 3).toInt();
+        throttleCalibration[0] = utilLib.getValue(splitTCALI, '-', 0).toInt();
+        throttleCalibration[1] = utilLib.getValue(splitTCALI, '-', 1).toInt();
+        throttleCalibration[2] = utilLib.getValue(splitTCALI, '-', 2).toInt();
+        throttleCalibration[3] = utilLib.getValue(splitTCALI, '-', 3).toInt();
 
-        writeStringToEEPROM(E_CALIBRATION_C, splitCCALI);
-        writeStringToEEPROM(E_CALIBRATION_B, splitBCALI);
-        writeStringToEEPROM(E_CALIBRATION_T, splitTCALI);
+        utilLib.writeStringToEEPROM(E_CALIBRATION_C, splitCCALI);
+        utilLib.writeStringToEEPROM(E_CALIBRATION_B, splitBCALI);
+        utilLib.writeStringToEEPROM(E_CALIBRATION_T, splitTCALI);
     }
 }
 
@@ -400,9 +347,9 @@ void resetDevice (String msg,  String cm, String dash) {
 
 void getMap (String msg,  String cm, String dash) {
     if (msg.indexOf("GetMap") >= 0) {
-        String TMAP = "TMAP:" + generateStringMap(outputMapThrottle);
-        String BMAP = "BMAP:" + generateStringMap(outputMapBrake);
-        String CMAP = "CMAP:" + generateStringMap(outputMapClutch);
+        String TMAP = "TMAP:" + utilLib.generateStringMap(outputMapThrottle);
+        String BMAP = "BMAP:" + utilLib.generateStringMap(outputMapBrake);
+        String CMAP = "CMAP:" + utilLib.generateStringMap(outputMapClutch);
         Serial.println(TMAP + cm + BMAP + cm + CMAP);
     }
 }
@@ -442,12 +389,12 @@ void getCalibration (String msg,  String cm, String dash) {
 void updateInverted (String msg) {
   if (msg.indexOf("INVER:") >= 0) {
     Serial.println(msg);
-    String splitINVER = getValue(msg, ',', 0);
+    String splitINVER = utilLib.getValue(msg, ',', 0);
     splitINVER.replace("INVER:", "");
-    throttleInverted = getValue(splitINVER, '-', 0).toInt();
-    brakeInverted = getValue(splitINVER, '-', 1).toInt();
-    clutchInverted = getValue(splitINVER, '-', 2).toInt();
-    writeStringToEEPROM(E_PEDAL_INVERTED_MAP, splitINVER);
+    throttleInverted = utilLib.getValue(splitINVER, '-', 0).toInt();
+    brakeInverted = utilLib.getValue(splitINVER, '-', 1).toInt();
+    clutchInverted = utilLib.getValue(splitINVER, '-', 2).toInt();
+    utilLib.writeStringToEEPROM(E_PEDAL_INVERTED_MAP, splitINVER);
   }
 }
 
@@ -456,12 +403,12 @@ void updateThrottleMap (String msg) {
   if (msg.indexOf("TMAP:") >= 0) {
     String striped_Tmap = msg;
     striped_Tmap.replace("TMAP:", "");
-    String tpart0 = getValue(striped_Tmap, '-', 0);
-    String tpart1 = getValue(striped_Tmap, '-', 1);
-    String tpart2 = getValue(striped_Tmap, '-', 2);
-    String tpart3 = getValue(striped_Tmap, '-', 3);
-    String tpart4 = getValue(striped_Tmap, '-', 4);
-    String tpart5 = getValue(striped_Tmap, '-', 5);
+    String tpart0 = utilLib.getValue(striped_Tmap, '-', 0);
+    String tpart1 = utilLib.getValue(striped_Tmap, '-', 1);
+    String tpart2 = utilLib.getValue(striped_Tmap, '-', 2);
+    String tpart3 = utilLib.getValue(striped_Tmap, '-', 3);
+    String tpart4 = utilLib.getValue(striped_Tmap, '-', 4);
+    String tpart5 = utilLib.getValue(striped_Tmap, '-', 5);
     outputMapThrottle[0] = tpart0.toInt();
     outputMapThrottle[1] = tpart1.toInt();
     outputMapThrottle[2] = tpart2.toInt();
@@ -470,7 +417,7 @@ void updateThrottleMap (String msg) {
     outputMapThrottle[5] = tpart5.toInt();
 
     // update EEPROM settings
-    writeStringToEEPROM(E_THROTTLE, generateStringMap(outputMapThrottle));
+    utilLib.writeStringToEEPROM(E_THROTTLE, utilLib.generateStringMap(outputMapThrottle));
   }
 }
 
@@ -478,12 +425,12 @@ void updateBrakeMap(String msg) {
   if (msg.indexOf("BMAP:") >= 0) {
     String striped_Bmap = msg;
     striped_Bmap.replace("BMAP:", "");
-    String bpart0 = getValue(striped_Bmap, '-', 0);
-    String bpart1 = getValue(striped_Bmap, '-', 1);
-    String bpart2 = getValue(striped_Bmap, '-', 2);
-    String bpart3 = getValue(striped_Bmap, '-', 3);
-    String bpart4 = getValue(striped_Bmap, '-', 4);
-    String bpart5 = getValue(striped_Bmap, '-', 5);
+    String bpart0 = utilLib.getValue(striped_Bmap, '-', 0);
+    String bpart1 = utilLib.getValue(striped_Bmap, '-', 1);
+    String bpart2 = utilLib.getValue(striped_Bmap, '-', 2);
+    String bpart3 = utilLib.getValue(striped_Bmap, '-', 3);
+    String bpart4 = utilLib.getValue(striped_Bmap, '-', 4);
+    String bpart5 = utilLib.getValue(striped_Bmap, '-', 5);
     outputMapBrake[0] = bpart0.toInt();
     outputMapBrake[1] = bpart1.toInt();
     outputMapBrake[2] = bpart2.toInt();
@@ -492,7 +439,7 @@ void updateBrakeMap(String msg) {
     outputMapBrake[5] = bpart5.toInt();
 
     // update EEPROM settings
-    writeStringToEEPROM(E_BRAKE, generateStringMap(outputMapBrake));
+    utilLib.writeStringToEEPROM(E_BRAKE, utilLib.generateStringMap(outputMapBrake));
   }
 }
 
@@ -500,12 +447,12 @@ void updateClutchMap(String msg) {
   if (msg.indexOf("CMAP:") >= 0) {
     String striped_Cmap = msg;
     striped_Cmap.replace("CMAP:", "");
-    String cpart0 = getValue(striped_Cmap, '-', 0);
-    String cpart1 = getValue(striped_Cmap, '-', 1);
-    String cpart2 = getValue(striped_Cmap, '-', 2);
-    String cpart3 = getValue(striped_Cmap, '-', 3);
-    String cpart4 = getValue(striped_Cmap, '-', 4);
-    String cpart5 = getValue(striped_Cmap, '-', 5);
+    String cpart0 = utilLib.getValue(striped_Cmap, '-', 0);
+    String cpart1 = utilLib.getValue(striped_Cmap, '-', 1);
+    String cpart2 = utilLib.getValue(striped_Cmap, '-', 2);
+    String cpart3 = utilLib.getValue(striped_Cmap, '-', 3);
+    String cpart4 = utilLib.getValue(striped_Cmap, '-', 4);
+    String cpart5 = utilLib.getValue(striped_Cmap, '-', 5);
     outputMapClutch[0] = cpart0.toInt();
     outputMapClutch[1] = cpart1.toInt();
     outputMapClutch[2] = cpart2.toInt();
@@ -514,23 +461,6 @@ void updateClutchMap(String msg) {
     outputMapClutch[5] = cpart5.toInt();
 
     // update EEPROM settings
-    writeStringToEEPROM(E_CLUTCH, generateStringMap(outputMapClutch));
+    utilLib.writeStringToEEPROM(E_CLUTCH, utilLib.generateStringMap(outputMapClutch));
   }
-}
-
-
-String getValue(String data, char separator, int index) {
-  int found = 0;
-  int strIndex[] = {0, -1};
-  int maxIndex = data.length() - 1;
-
-  for (int i = 0; i <= maxIndex && found <= index; i++) {
-    if (data.charAt(i) == separator || i == maxIndex) {
-      found++;
-      strIndex[0] = strIndex[1] + 1;
-      strIndex[1] = (i == maxIndex) ? i + 1 : i;
-    }
-  }
-
-  return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
