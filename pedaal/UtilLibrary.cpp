@@ -57,6 +57,20 @@ String UtilLib::generateStringMap(int *list) {
   return String(output);
 }
 
+String UtilLib::generateStringMapCali(int *list) {
+  String output;
+  for (int i = 0; i < 4; i++) {
+    if (i < 3) {
+      output += String(list[i]) + "-";
+    }
+    if (i == 3) {
+      output += String(list[i]);
+    }
+    //    output += String(list[i]) += String(",");
+  }
+  return String(output);
+}
+
 String UtilLib::getValue(String data, char separator, int index) {
   int found = 0;
   int strIndex[] = {0, -1};

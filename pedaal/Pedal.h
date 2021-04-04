@@ -43,7 +43,7 @@ class Pedal
     ////////////////////
     void Pedal::resetCalibrationValues(int EEPROMSpace) {
       int resetMap[4] = {0, SENSOR_RANGE, 0, SENSOR_RANGE};
-      utilLib.writeStringToEEPROM(EEPROMSpace, utilLib.generateStringMap(resetMap));
+      utilLib.writeStringToEEPROM(EEPROMSpace, utilLib.generateStringMapCali(resetMap));
     }
 
     void Pedal::getEEPROMCalibrationValues(int EEPROMSpace) {
@@ -59,13 +59,13 @@ class Pedal
 
       // update EEPROM settings
       // todo:fix
-      utilLib.writeStringToEEPROM(EEPROMSpace, utilLib.generateStringMap(_calibration));
+      utilLib.writeStringToEEPROM(EEPROMSpace, map);
     }
 
     String Pedal::getCalibrationValues(String prefix) {
-      return prefix + utilLib.generateStringMap(_calibration);
+      return prefix + utilLib.generateStringMapCali(_calibration);
     }
-    ////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     void Pedal::getEEPROMOutputMapValues(int EEPROMSpace) {
       String EEPROM_Map = utilLib.readStringFromEEPROM(EEPROMSpace);
@@ -82,7 +82,7 @@ class Pedal
 
       // update EEPROM settings
       // todo:fix
-      utilLib.writeStringToEEPROM(EEPROMSpace, utilLib.generateStringMap(_outputMap));
+      utilLib.writeStringToEEPROM(EEPROMSpace, map);
     }
 
     String Pedal::getOutputMapValues(String prefix) {
@@ -90,10 +90,10 @@ class Pedal
     }
 
     void Pedal::resetOutputMapValues(int EEPROMSpace) {
-      int resetMap[6] =  { 0, 20, 40, 60, 80, 100 };
+      int resetMap[6] = {0, 20, 40, 60, 80, 100};
       utilLib.writeStringToEEPROM(EEPROMSpace, utilLib.generateStringMap(resetMap));
     }
-    ////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
   private:
     byte _analogInput;

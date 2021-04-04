@@ -23,6 +23,8 @@ class UtilLib  {
 
     String generateStringMap(int *list);
 
+    String generateStringMapCali(int *list);
+
     String getValue(String data, char separator, int index);
 
   private:

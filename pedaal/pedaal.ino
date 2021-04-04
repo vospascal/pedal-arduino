@@ -31,6 +31,7 @@ Pedal brake = Pedal(A3, "B:");
 Pedal throttle = Pedal(A0, "T:");
 Pedal clutch = Pedal(A1, "C:");
 
+
 // the setup routine runs once when you press reset:
 void setup() {
   // initialize serial communication at 115200 bits per second:
@@ -48,14 +49,18 @@ void setup() {
 void loop() {
   //  timing
   //  unsigned long start = micros(); //4492 microseconds
-  brake.readValues();
-  throttle.readValues();
-  clutch.readValues();
 
   if (Serial.available() > 0) {
     String msg = Serial.readStringUntil('\n');
     String cm = ",";
     String dash = "-";
+
+    if (msg.indexOf("clearEEPROM") >= 0) {
+      for (int i = 0 ; i < EEPROM.length() ; i++) {
+        EEPROM.write(i, 0);
+      }
+      Serial.println("done");
+    }
 
     resetDevice(msg, cm, dash);
     getMap(msg, cm, dash);
@@ -80,25 +85,22 @@ void loop() {
       throttle.setOutputMapValues(tmap, E_THROTTLE);
     }
 
-    if (msg.indexOf("TCALI:") >= 0) {
-      String tmap = msg;
-      tmap.replace("TCALI:", "");
-      throttle.setCalibrationValues(tmap, E_CALIBRATION_T);
-    }
-    if (msg.indexOf("BCALI:") >= 0) {
-      String tmap = msg;
-      tmap.replace("BCALI:", "");
-      brake.setCalibrationValues(tmap, E_CALIBRATION_B);
-    }
-    if (msg.indexOf("CCALI:") >= 0) {
-      String tmap = msg;
-      tmap.replace("CCALI:", "");
-      brake.setCalibrationValues(tmap, E_CALIBRATION_C);
+    if (msg.indexOf("CCALI:") >= 0 && msg.indexOf("BCALI:") >= 0 && msg.indexOf("TCALI:") >= 0) {
+      String splitTCALI = utilLib.getValue(msg, ',', 0);
+      splitTCALI.replace("TCALI:", "");
+      throttle.setCalibrationValues(splitTCALI, E_CALIBRATION_T);
+
+      String splitBCALI = utilLib.getValue(msg, ',', 1);
+      splitBCALI.replace("BCALI:", "");
+      brake.setCalibrationValues(splitBCALI, E_CALIBRATION_B);
+
+      String splitCCALI = utilLib.getValue(msg, ',', 2);
+      splitCCALI.replace("CCALI:", "");
+      brake.setCalibrationValues(splitCCALI, E_CALIBRATION_C);
     }
 
     updateInverted(msg);
   }
-
 
   Joystick.setThrottle(throttle.getAfterHID());
   Joystick.setBrake(brake.getAfterHID());
@@ -106,6 +108,9 @@ void loop() {
   Joystick.sendState(); // Update the Joystick status on the PC
 
   if (Serial.availableForWrite ()) {
+    brake.readValues();
+    throttle.readValues();
+    clutch.readValues();
     Serial.println(throttle.getPedalString() + brake.getPedalString() + clutch.getPedalString());
   }
 
@@ -132,9 +137,9 @@ void loadDeviceSettings() {
   updateInverted(INVER + EEPROM_InvertedMap);
 
 
-  clutch.getEEPROMOutputMapValues(E_CALIBRATION_C);
-  brake.getEEPROMOutputMapValues(E_CALIBRATION_B);
-  throttle.getEEPROMOutputMapValues(E_CALIBRATION_T);
+  clutch.getEEPROMCalibrationValues(E_CALIBRATION_C);
+  brake.getEEPROMCalibrationValues(E_CALIBRATION_B);
+  throttle.getEEPROMCalibrationValues(E_CALIBRATION_T);
 
 }
 
