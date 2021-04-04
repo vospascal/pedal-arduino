@@ -3,9 +3,9 @@
 #include <EEPROM.h>
 
 #if (ARDUINO >=100)
-  #include "Arduino.h"
+#include "Arduino.h"
 #else
-  #include "WProgram.h"
+#include "WProgram.h"
 #endif
 
 class UtilLib  {
