@@ -1,12 +1,20 @@
 #define SENSOR_RANGE 1023
 #define SERIAL_RANGE 100
 
+#define BRAKE_PEDAL_LOAD_BEAM_CELL_TARE_REPS  10
+#define BRAKE_PEDAL_LOAD_BEAM_CELL_MAX_VAL  2000000
+#define BRAKE_PEDAL_LOAD_BEAM_CELL_SCALING  1100
+#define SENSITIVITY 64 // Setting for HX711 Load Cell sensitivity. Medium = 64, High = 128, (*Channel B only, Low = 32)
+//#define GAIN 128
+
 #ifndef UtilLib
 #include "UtilLibrary.h"
 
 #include "AnalogSmooth.h"
 
 #include <HX711.h>
+
+#include "ADS1X15.h"
 
 // init util library
 UtilLib utilLib;
@@ -19,9 +27,32 @@ class Pedal
 
   public:
     //initialise pedal
-    Pedal(String prefix)
-    {
+    Pedal(String prefix) {
       _prefix = prefix;
+    }
+
+    void Pedal::ConfigAnalog ( byte analogInput) {
+      _analogInput = analogInput;
+      _signal = 0;
+    }
+
+    void Pedal::ConfigLoadCell (int DOUT, int CLK)
+    {
+      HX711 _loadCell(DOUT, CLK, 128);
+      _loadCell.tare(BRAKE_PEDAL_LOAD_BEAM_CELL_TARE_REPS); // Reset values to zero
+      _signal = 1;
+    }
+
+    void Pedal::ConfigADS ()
+    {
+      ADS1115 _ads1015;
+      _ads1015.begin();
+      _ads1015.setGain(0);      // 6.144 volt
+      _ads1015.setDataRate(7);  // fast
+      _ads1015.setMode(0);      // continuous mode
+      _ads1015.readADC(0);      // first read to trigger
+
+      _signal = 2;
     }
 
     int Pedal::getAfterHID() {
@@ -32,8 +63,19 @@ class Pedal
       return _pedalString;
     }
 
-    void Pedal::readAnalogValues(byte analogInput) {
-      int rawValue = analogRead(analogInput);
+    void Pedal::readValues() {
+      int rawValue = 0;
+      if (_signal == 0) {
+        rawValue = analogRead(_analogInput);
+      }
+      if (_signal == 1) {
+        rawValue = _loadCell.read();
+        rawValue /= BRAKE_PEDAL_LOAD_BEAM_CELL_SCALING;
+      }
+      if (_signal == 2) {
+        rawValue = _ads1015.getValue();
+      }
+
       if (rawValue < 0) rawValue = 0;
       if (_smooth == 1) {
         rawValue = as.smooth(rawValue);
@@ -41,14 +83,6 @@ class Pedal
       Pedal::updatePedal(rawValue);
     }
 
-    void Pedal::readHX711Values(HX711 loadcell) {
-      int rawValue = loadcell.read();
-      if (rawValue < 0) rawValue = 0;
-      if (_smooth == 1) {
-        rawValue = as.smooth(rawValue);
-      }
-      Pedal::updatePedal(rawValue);
-    }
 
     void Pedal::setSmoothValues(int smoothValues) {
       _smooth = smoothValues;
@@ -125,6 +159,10 @@ class Pedal
     String _prefix;
     String _pedalString;
     int _afterHID;
+    int _signal = 0;
+    HX711 _loadCell;
+    ADS1115 _ads1015;
+    int _analogInput = 0;
     int _inverted = 0; //0 = false / 1 - true
     int _smooth = 0;
     int _inputMap[6] =  { 0, 20, 40, 60, 80, 100 };

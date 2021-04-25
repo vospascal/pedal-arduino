@@ -32,11 +32,22 @@ Pedal brake = Pedal("B:");
 Pedal throttle = Pedal("T:");
 Pedal clutch = Pedal("C:");
 
-
 // the setup routine runs once when you press reset:
 void setup() {
   // initialize serial communication at 115200 bits per second:
   Serial.begin(115200);
+
+  //the idea is you can set your config here
+
+  throttle.ConfigAnalog(A0);
+  brake.ConfigAnalog(A3);
+  clutch.ConfigAnalog(A1);
+  
+//  throttle.ConfigLoadCell(6, 5); // Arduino pin 6 connect to HX711 DOUT /  Arduino pin 5 connect to HX711 CLK
+//  brake.ConfigLoadCell(7, 5); // Arduino pin 7 connect to HX711 DOUT /  Arduino pin 5 connect to HX711 CLK
+//  clutch.ConfigLoadCell(8, 5); // Arduino pin 8 connect to HX711 DOUT /  Arduino pin 5 connect to HX711 CLK
+
+
   loadEEPROMSettings();
   Joystick.begin();
   Joystick.setThrottle(0);
@@ -104,9 +115,9 @@ void loop() {
     updateInverted(msg);
     updateSmooth(msg);
   }
-  brake.readAnalogValues(A3);
-  throttle.readAnalogValues(A0);
-  clutch.readAnalogValues(A1);
+  brake.readValues();
+  throttle.readValues();
+  clutch.readValues();
 
 
   Joystick.setThrottle(throttle.getAfterHID());
