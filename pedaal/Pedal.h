@@ -43,15 +43,14 @@ class Pedal
       _signal = 1;
     }
 
-    void Pedal::ConfigADS ()
+    void Pedal::ConfigADS (int channel)
     {
       ADS1115 _ads1015;
       _ads1015.begin();
       _ads1015.setGain(0);      // 6.144 volt
       _ads1015.setDataRate(7);  // fast
       _ads1015.setMode(0);      // continuous mode
-      _ads1015.readADC(0);      // first read to trigger
-
+      _ads1015.readADC(channel);      // first read to trigger
       _signal = 2;
     }
 
