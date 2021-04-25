@@ -105,6 +105,12 @@ void loop() {
       throttle.setOutputMapValues(tmap, E_THROTTLE);
     }
 
+    if (msg.indexOf("CALIRESET") >= 0) {
+      clutch.resetCalibrationValues(E_CALIBRATION_C);
+      brake.resetCalibrationValues(E_CALIBRATION_B);
+      throttle.resetCalibrationValues(E_CALIBRATION_T);
+    }
+
     if (msg.indexOf("CCALI:") >= 0 && msg.indexOf("BCALI:") >= 0 && msg.indexOf("TCALI:") >= 0) {
       String splitTCALI = utilLib.getValue(msg, ',', 0);
       splitTCALI.replace("TCALI:", "");
@@ -116,7 +122,7 @@ void loop() {
 
       String splitCCALI = utilLib.getValue(msg, ',', 2);
       splitCCALI.replace("CCALI:", "");
-      brake.setCalibrationValues(splitCCALI, E_CALIBRATION_C);
+      clutch.setCalibrationValues(splitCCALI, E_CALIBRATION_C);
     }
 
     updateInverted(msg);
@@ -162,7 +168,7 @@ void loadDeviceSettings() {
 
   String EEPROM_SmoothMap = utilLib.readStringFromEEPROM(E_PEDAL_SMOOTH_MAP);
   String SMOOTH = "SMOOTH:";
-  updateSmooth(EEPROM_SmoothMap);
+  updateSmooth(SMOOTH + EEPROM_SmoothMap);
 
 
   clutch.getEEPROMCalibrationValues(E_CALIBRATION_C);
@@ -183,7 +189,7 @@ void resetDeviceSettings() {
   utilLib.writeStringToEEPROM(E_PEDAL_INVERTED_MAP, "0-0-0");
 
   // 0 = false / 1 = true
-  utilLib.writeStringToEEPROM(E_PEDAL_SMOOTH_MAP, "0-0-0");
+  utilLib.writeStringToEEPROM(E_PEDAL_SMOOTH_MAP, "1-1-1");
 
   clutch.resetCalibrationValues(E_CALIBRATION_C);
   brake.resetCalibrationValues(E_CALIBRATION_B);

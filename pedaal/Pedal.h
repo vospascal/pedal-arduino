@@ -10,7 +10,7 @@
 #ifndef UtilLib
 #include "UtilLibrary.h"
 
-#include "AnalogSmooth.h"
+#include "Smoothed.h"
 
 #include <HX711.h>
 
@@ -19,8 +19,6 @@
 // init util library
 UtilLib utilLib;
 
-// set to window 10
-AnalogSmooth as = AnalogSmooth(10);
 
 class Pedal
 {
@@ -29,6 +27,8 @@ class Pedal
     //initialise pedal
     Pedal(String prefix) {
       _prefix = prefix;
+      _mySensor.begin(SMOOTHED_EXPONENTIAL, 10);
+      _mySensor.clear();
     }
 
     void Pedal::ConfigAnalog ( byte analogInput) {
@@ -84,7 +84,6 @@ class Pedal
       Pedal::updatePedal(rawValue);
     }
 
-
     void Pedal::setSmoothValues(int smoothValues) {
       _smooth = smoothValues;
     }
@@ -104,7 +103,12 @@ class Pedal
     ////////////////////
     void Pedal::resetCalibrationValues(int EEPROMSpace) {
       int resetMap[4] = {0, SENSOR_RANGE, 0, SENSOR_RANGE};
+      _calibration[0] = resetMap[0];
+      _calibration[1] = resetMap[1];
+      _calibration[2] = resetMap[2];
+      _calibration[3] = resetMap[3];
       utilLib.writeStringToEEPROM(EEPROMSpace, utilLib.generateStringMapCali(resetMap));
+
     }
 
     void Pedal::getEEPROMCalibrationValues(int EEPROMSpace) {
@@ -161,11 +165,12 @@ class Pedal
     String _pedalString;
     int _afterHID;
     int _signal = 0;
+    Smoothed <int> _mySensor;
     HX711 _loadCell;
     ADS1115 _ads1015;
     int _analogInput = 0;
     int _inverted = 0; //0 = false / 1 - true
-    int _smooth = 0;
+    int _smooth = 0; //0 = false / 1 - true
     int _inputMap[6] =  { 0, 20, 40, 60, 80, 100 };
     int _outputMap[6] = { 0, 20, 40, 60, 80, 100 };
     int _calibration[4] = {0, SENSOR_RANGE, 0, SENSOR_RANGE}; // calibration low, calibration high, deadzone low, deadzone high
@@ -181,7 +186,8 @@ class Pedal
       ////////////////////////////////////////////////////////////////////////////////
 
       if (_smooth == 1) {
-        rawValue = as.smooth(rawValue);
+        _mySensor.add(rawValue);
+        rawValue = _mySensor.get();
       }
 
       if (_inverted == 1) {
