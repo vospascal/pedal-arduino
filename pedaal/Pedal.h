@@ -66,19 +66,21 @@ class Pedal
       int rawValue = 0;
       if (_signal == 0) {
         rawValue = analogRead(_analogInput);
+        if (rawValue < 0) rawValue = 0;
       }
       if (_signal == 1) {
         rawValue = _loadCell.read();
+        if (rawValue > BRAKE_PEDAL_LOAD_BEAM_CELL_MAX_VAL) {
+          rawValue = 0;
+        }
+        if (rawValue < 0) rawValue = 0;
         rawValue /= BRAKE_PEDAL_LOAD_BEAM_CELL_SCALING;
       }
       if (_signal == 2) {
         rawValue = _ads1015.getValue();
+        if (rawValue < 0) rawValue = 0;
       }
 
-      if (rawValue < 0) rawValue = 0;
-      if (_smooth == 1) {
-        rawValue = as.smooth(rawValue);
-      }
       Pedal::updatePedal(rawValue);
     }
 
@@ -177,6 +179,10 @@ class Pedal
       int afterHID;
 
       ////////////////////////////////////////////////////////////////////////////////
+
+      if (_smooth == 1) {
+        rawValue = as.smooth(rawValue);
+      }
 
       if (_inverted == 1) {
         rawValue = SENSOR_RANGE - rawValue;
