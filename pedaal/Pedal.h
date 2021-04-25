@@ -4,17 +4,23 @@
 #ifndef UtilLib
 #include "UtilLibrary.h"
 
+#include "AnalogSmooth.h"
+
+#include <HX711.h>
+
 // init util library
 UtilLib utilLib;
+
+// set to window 10
+AnalogSmooth as = AnalogSmooth(10);
 
 class Pedal
 {
 
   public:
     //initialise pedal
-    Pedal(byte analogInput, String prefix)
+    Pedal(String prefix)
     {
-      _analogInput = analogInput;
       _prefix = prefix;
     }
 
@@ -26,11 +32,31 @@ class Pedal
       return _pedalString;
     }
 
-    void Pedal::readValues() {
-      int rawValue = analogRead(_analogInput);
+    void Pedal::readAnalogValues(byte analogInput) {
+      int rawValue = analogRead(analogInput);
+      if (rawValue < 0) rawValue = 0;
+      if (_smooth == 1) {
+        rawValue = as.smooth(rawValue);
+      }
       Pedal::updatePedal(rawValue);
     }
 
+    void Pedal::readHX711Values(HX711 loadcell) {
+      int rawValue = loadcell.read();
+      if (rawValue < 0) rawValue = 0;
+      if (_smooth == 1) {
+        rawValue = as.smooth(rawValue);
+      }
+      Pedal::updatePedal(rawValue);
+    }
+
+    void Pedal::setSmoothValues(int smoothValues) {
+      _smooth = smoothValues;
+    }
+
+    int Pedal::getSmoothValues() {
+      return _smooth;
+    }
 
     void Pedal::setInvertedValues(int invertedValues) {
       _inverted = invertedValues;
@@ -96,11 +122,11 @@ class Pedal
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
   private:
-    byte _analogInput;
     String _prefix;
     String _pedalString;
     int _afterHID;
     int _inverted = 0; //0 = false / 1 - true
+    int _smooth = 0;
     int _inputMap[6] =  { 0, 20, 40, 60, 80, 100 };
     int _outputMap[6] = { 0, 20, 40, 60, 80, 100 };
     int _calibration[4] = {0, SENSOR_RANGE, 0, SENSOR_RANGE}; // calibration low, calibration high, deadzone low, deadzone high

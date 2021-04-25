@@ -17,6 +17,7 @@
 #define E_CALIBRATION_B 120
 #define E_CALIBRATION_T 150
 #define E_PEDAL_INVERTED_MAP 200
+#define E_PEDAL_SMOOTH_MAP 210
 #define SENSOR_RANGE 1023
 #define SERIAL_RANGE 100
 
@@ -27,9 +28,9 @@ Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID, JOYSTICK_TYPE_GAMEPAD,
                    false, true,          // rudder or throttle
                    false, true, false);  // accelerator, brake, or steering
 
-Pedal brake = Pedal(A3, "B:");
-Pedal throttle = Pedal(A0, "T:");
-Pedal clutch = Pedal(A1, "C:");
+Pedal brake = Pedal("B:");
+Pedal throttle = Pedal("T:");
+Pedal clutch = Pedal("C:");
 
 
 // the setup routine runs once when you press reset:
@@ -48,7 +49,7 @@ void setup() {
 // the loop routine runs over and over again forever:
 void loop() {
   //  timing
-  //  unsigned long start = micros(); //4492 microseconds
+  //    unsigned long start = micros();
 
   if (Serial.available() > 0) {
     String msg = Serial.readStringUntil('\n');
@@ -65,6 +66,7 @@ void loop() {
     resetDevice(msg, cm, dash);
     getMap(msg, cm, dash);
     getInverted(msg, cm, dash);
+    getSmooth(msg, cm, dash);
     getCalibration(msg, cm, dash);
 
     if (msg.indexOf("CMAP:") >= 0) {
@@ -100,21 +102,25 @@ void loop() {
     }
 
     updateInverted(msg);
+    updateSmooth(msg);
   }
+  brake.readAnalogValues(A3);
+  throttle.readAnalogValues(A0);
+  clutch.readAnalogValues(A1);
+
 
   Joystick.setThrottle(throttle.getAfterHID());
   Joystick.setBrake(brake.getAfterHID());
   Joystick.setZAxis(clutch.getAfterHID());
   Joystick.sendState(); // Update the Joystick status on the PC
-
   if (Serial.availableForWrite ()) {
-    brake.readValues();
-    throttle.readValues();
-    clutch.readValues();
     Serial.println(throttle.getPedalString() + brake.getPedalString() + clutch.getPedalString());
   }
 
-  //  delay(300);
+  //    unsigned long end = micros();
+  //    unsigned long delta = end - start;
+  //    Serial.println(delta);
+  //    delay(300);
 }
 //---------------------------------------------------------
 
@@ -136,6 +142,10 @@ void loadDeviceSettings() {
   String INVER = "INVER:";
   updateInverted(INVER + EEPROM_InvertedMap);
 
+  String EEPROM_SmoothMap = utilLib.readStringFromEEPROM(E_PEDAL_SMOOTH_MAP);
+  String SMOOTH = "SMOOTH:";
+  updateSmooth(EEPROM_SmoothMap);
+
 
   clutch.getEEPROMCalibrationValues(E_CALIBRATION_C);
   brake.getEEPROMCalibrationValues(E_CALIBRATION_B);
@@ -153,6 +163,9 @@ void resetDeviceSettings() {
 
   // 0 = false / 1 = true
   utilLib.writeStringToEEPROM(E_PEDAL_INVERTED_MAP, "0-0-0");
+
+  // 0 = false / 1 = true
+  utilLib.writeStringToEEPROM(E_PEDAL_SMOOTH_MAP, "0-0-0");
 
   clutch.resetCalibrationValues(E_CALIBRATION_C);
   brake.resetCalibrationValues(E_CALIBRATION_B);
@@ -173,6 +186,13 @@ void getMap (String msg,  String cm, String dash) {
   }
 }
 
+void getSmooth (String msg,  String cm, String dash) {
+  if (msg.indexOf("GetSmooth") >= 0) {
+    String SMOOTH = "SMOOTH:";
+    Serial.println(SMOOTH + throttle.getSmoothValues() + dash + brake.getSmoothValues() + dash + clutch.getSmoothValues());
+  }
+}
+
 void getInverted (String msg,  String cm, String dash) {
   if (msg.indexOf("GetInverted") >= 0) {
     String INVER = "INVER:";
@@ -187,6 +207,17 @@ void getCalibration (String msg,  String cm, String dash) {
   }
 }
 
+void updateSmooth(String msg) {
+  if (msg.indexOf("SMOOTH:") >= 0) {
+    String splitSMOOTH = utilLib.getValue(msg, ',', 0);
+    splitSMOOTH.replace("SMOOTH:", "");
+    throttle.setSmoothValues(utilLib.getValue(splitSMOOTH, '-', 0).toInt());
+    brake.setSmoothValues(utilLib.getValue(splitSMOOTH, '-', 1).toInt());
+    clutch.setSmoothValues(utilLib.getValue(splitSMOOTH, '-', 2).toInt());
+
+    utilLib.writeStringToEEPROM(E_PEDAL_SMOOTH_MAP, splitSMOOTH);
+  }
+}
 
 void updateInverted (String msg) {
   if (msg.indexOf("INVER:") >= 0) {
