@@ -47,10 +47,6 @@ void setup() {
   //  brake.ConfigLoadCell(7, 5); // Arduino pin 7 connect to HX711 DOUT /  Arduino pin 5 connect to HX711 CLK
   //  clutch.ConfigLoadCell(8, 5); // Arduino pin 8 connect to HX711 DOUT /  Arduino pin 5 connect to HX711 CLK
 
-  //  throttle.ConfigLoadCell(6, 5); // Arduino pin 6 connect to HX711 DOUT /  Arduino pin 5 connect to HX711 CLK
-  //  brake.ConfigLoadCell(7, 5); // Arduino pin 7 connect to HX711 DOUT /  Arduino pin 5 connect to HX711 CLK
-  //  clutch.ConfigLoadCell(8, 5); // Arduino pin 8 connect to HX711 DOUT /  Arduino pin 5 connect to HX711 CLK
-
   //  throttle.ConfigADS(0); //channel 0
   //  brake.ConfigADS(1); //channel 1
   //  clutch.ConfigADS(2); //channel 2
