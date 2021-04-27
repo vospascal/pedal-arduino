@@ -11,9 +11,7 @@
 #include "UtilLibrary.h"
 
 #include "Smoothed.h"
-
-#include <HX711.h>
-
+#include "HX711.h"
 #include "ADS1X15.h"
 
 // init util library
@@ -38,7 +36,7 @@ class Pedal
 
     void Pedal::ConfigLoadCell (int DOUT, int CLK)
     {
-      HX711 _loadCell(DOUT, CLK, 128);
+      _loadCell.begin(DOUT, CLK, 128);
       _loadCell.tare(BRAKE_PEDAL_LOAD_BEAM_CELL_TARE_REPS); // Reset values to zero
       _signal = 1;
     }
