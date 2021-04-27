@@ -1,4 +1,4 @@
-## pedal-gui-arduino
+## PedalBox
 arduino side to client gui found here https://github.com/vospascal/pedal-gui
 
 ## help
