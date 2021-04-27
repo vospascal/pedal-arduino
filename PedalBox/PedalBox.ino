@@ -9,6 +9,8 @@
 
 #include "Pedal.h"
 
+ADS1115 _ads1015;
+
 #define E_INIT 1023
 #define E_CLUTCH 0
 #define E_THROTTLE 30
@@ -39,9 +41,18 @@ void setup() {
 
   //the idea is you can set your config here
 
-  throttle.ConfigAnalog(A0);
-  brake.ConfigAnalog(A3);
-  clutch.ConfigAnalog(A1);
+  _ads1015.begin();
+  _ads1015.setGain(0);      // 6.144 volt
+  _ads1015.setDataRate(7);  // fast
+  _ads1015.setMode(0);      // continuous mode
+
+  throttle.ConfigADS(_ads1015, 0);
+  brake.ConfigADS(_ads1015, 1);
+  clutch.ConfigADS(_ads1015, 2);
+
+  Joystick.setThrottleRange(0, 32767);
+  Joystick.setBrakeRange(0, 32767);
+  Joystick.setZAxisRange(0, 32767);
 
   //  throttle.ConfigLoadCell(6, 5); // Arduino pin 6 connect to HX711 DOUT /  Arduino pin 5 connect to HX711 CLK
   //  brake.ConfigLoadCell(7, 5); // Arduino pin 7 connect to HX711 DOUT /  Arduino pin 5 connect to HX711 CLK

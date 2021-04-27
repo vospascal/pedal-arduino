@@ -1,4 +1,4 @@
-#define SENSOR_RANGE 1023
+#define SENSOR_RANGE 32767
 #define SERIAL_RANGE 100
 
 #define BRAKE_PEDAL_LOAD_BEAM_CELL_TARE_REPS  10
@@ -38,18 +38,15 @@ class Pedal
 
     void Pedal::ConfigLoadCell (int DOUT, int CLK)
     {
-      HX711 _loadCell(DOUT, CLK, 128);
+      _loadCell.begin(DOUT, CLK, 128);
       _loadCell.tare(BRAKE_PEDAL_LOAD_BEAM_CELL_TARE_REPS); // Reset values to zero
       _signal = 1;
     }
 
-    void Pedal::ConfigADS (int channel)
+    void Pedal::ConfigADS (ADS1115 _ads1015, int channel)
     {
-      ADS1115 _ads1015;
-      _ads1015.begin();
-      _ads1015.setGain(0);      // 6.144 volt
-      _ads1015.setDataRate(7);  // fast
-      _ads1015.setMode(0);      // continuous mode
+      this->_ads1015 = _ads1015;
+      this->channel = channel;
       _ads1015.readADC(channel);      // first read to trigger
       _signal = 2;
     }
@@ -77,7 +74,7 @@ class Pedal
         rawValue /= BRAKE_PEDAL_LOAD_BEAM_CELL_SCALING;
       }
       if (_signal == 2) {
-        rawValue = _ads1015.getValue();
+        rawValue = _ads1015.readADC(channel);
         if (rawValue < 0) rawValue = 0;
       }
 
@@ -168,6 +165,7 @@ class Pedal
     Smoothed <int> _mySensor;
     HX711 _loadCell;
     ADS1115 _ads1015;
+    int channel;
     int _analogInput = 0;
     int _inverted = 0; //0 = false / 1 - true
     int _smooth = 0; //0 = false / 1 - true
