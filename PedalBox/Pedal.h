@@ -43,6 +43,8 @@ class Pedal
 
     void Pedal::ConfigADS (ADS1115 _ads1015, int channel)
     {
+      this->_ads1015 = _ads1015;
+      this->_channel = channel;
       _ads1015.readADC(channel);      // first read to trigger
       _signal = 2;
     }
@@ -70,7 +72,7 @@ class Pedal
         rawValue /= _loadcell_scaling;
       }
       if (_signal == 2) {
-        rawValue = _ads1015.readADC(channel);
+        rawValue = _ads1015.readADC(_channel);
         if (rawValue < 0) rawValue = 0;
       }
 
@@ -172,7 +174,7 @@ class Pedal
     int _loadcell_sensitivity = 64; //Medium = 64, High = 128;
 
     ADS1115 _ads1015;
-    int channel = 0;
+    int _channel = 0;
     int _analogInput = A0;
     int _inverted = 0; //0 = false / 1 - true
     int _smooth = 0; //0 = false / 1 - true
