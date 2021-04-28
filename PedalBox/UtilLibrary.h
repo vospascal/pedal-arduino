@@ -13,17 +13,17 @@ class UtilLib  {
     // Constructor
     UtilLib();
 
-    void arrayMapMultiplier(float *list, float multipier);
+    void arrayMapMultiplier(long *list, long multipier);
 
-    void copyArray(int* src, float* dst, int len);
+    void copyArray(long* src, long* dst, int len);
 
     String readStringFromEEPROM(int addrOffset);
 
     void writeStringToEEPROM(int addrOffset, const String &strToWrite);
 
-    String generateStringMap(int *list);
+    String generateStringMap(long *list);
 
-    String generateStringMapCali(int *list);
+    String generateStringMapCali(long *list);
 
     String getValue(String data, char separator, int index);
 

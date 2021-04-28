@@ -4,7 +4,7 @@ UtilLib::UtilLib() {
   // Anything you need when instantiating your object goes here
 }
 
-void UtilLib::arrayMapMultiplier(float *list, float multipier) {
+void UtilLib::arrayMapMultiplier(long *list, long multipier) {
   list[0] = (int)(list[0] * multipier);
   list[1] = (int)(list[1] * multipier);
   list[2] = (int)(list[2] * multipier);
@@ -14,7 +14,7 @@ void UtilLib::arrayMapMultiplier(float *list, float multipier) {
 }
 
 
-void UtilLib::copyArray(int* src, float* dst, int len) {
+void UtilLib::copyArray(long* src, long* dst, int len) {
   for (int i = 0; i < len; i++) {
     *dst++ = *src++;
   }
@@ -43,7 +43,7 @@ void UtilLib::writeStringToEEPROM(int addrOffset, const String &strToWrite)
   }
 }
 
-String UtilLib::generateStringMap(int *list) {
+String UtilLib::generateStringMap(long *list) {
   String output;
   for (int i = 0; i < 6; i++) {
     if (i < 5) {
@@ -57,7 +57,7 @@ String UtilLib::generateStringMap(int *list) {
   return String(output);
 }
 
-String UtilLib::generateStringMapCali(int *list) {
+String UtilLib::generateStringMapCali(long *list) {
   String output;
   for (int i = 0; i < 4; i++) {
     if (i < 3) {

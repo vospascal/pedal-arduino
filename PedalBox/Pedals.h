@@ -218,21 +218,21 @@ class Pedals {
 
   private:
     ////// throttle config //////
-    int _throttle_bit = 32767; // default 10bit, list: 8bit, 10bit, 12bit
+    long _throttle_bit = 32767; // default 10bit, list: 8bit, 10bit, 12bit
     String _throttle_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
     byte _throttle_analog_input = A0; //default analog input
 
     ////// brake config //////
-    int _brake_bit = 32767; // default 10bit, list: 8bit, 10bit, 12bit
+    long _brake_bit = 32767; // default 10bit, list: 8bit, 10bit, 12bit
     String _brake_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
     byte _brake_analog_input = A0; //default analog input
 
     ////// clutch config //////
-    int _clutch_bit = 32767; // default 10bit, list: 8bit, 10bit, 12bit
+    long _clutch_bit = 32767; // default 10bit, list: 8bit, 10bit, 12bit
     String _clutch_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
     byte _clutch_analog_input = A0; //default analog input
 
-    int Pedals::getBit(String bits) {
+    long Pedals::getBit(String bits) {
       if (bits == "8bit") {
         return 1023;
       }
