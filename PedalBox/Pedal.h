@@ -24,8 +24,9 @@ class Pedal
       _mySensor.clear();
     }
 
-    void Pedal::setBits (long bits) {
-      _sensor_range = bits;
+    void Pedal::setBits (long rawBit, long hidBit) {
+      _raw_bit = rawBit;
+      _hid_bit = hidBit;
     }
 
     void Pedal::ConfigAnalog ( byte analogInput) {
@@ -94,7 +95,7 @@ class Pedal
 
     ////////////////////
     void Pedal::resetCalibrationValues(int EEPROMSpace) {
-      long resetMap[4] = {0, _sensor_range, 0, _sensor_range};
+      long resetMap[4] = {0, _raw_bit, 0, _raw_bit};
       _calibration[0] = resetMap[0];
       _calibration[1] = resetMap[1];
       _calibration[2] = resetMap[2];
@@ -155,7 +156,8 @@ class Pedal
   private:
     String _prefix;
     String _pedalString;
-    long _sensor_range = 32767;
+    long _raw_bit = 32767;
+    long _hid_bit = 32767;
     int _serial_range = 100;
     int _afterHID;
     int _signal = 0;
@@ -176,7 +178,7 @@ class Pedal
     int _smooth = 0; //0 = false / 1 - true
     long _inputMap[6] =  { 0, 20, 40, 60, 80, 100 };
     long _outputMap[6] = { 0, 20, 40, 60, 80, 100 };
-    long _calibration[4] = {0, _sensor_range, 0, _sensor_range}; // calibration low, calibration high, deadzone low, deadzone high
+    long _calibration[4] = {0, _raw_bit, 0, _raw_bit}; // calibration low, calibration high, deadzone low, deadzone high
 
 
     void updatePedal(long rawValue) {
@@ -194,7 +196,7 @@ class Pedal
       }
 
       if (_inverted == 1) {
-        rawValue = _sensor_range - rawValue;
+        rawValue = _raw_bit - rawValue;
       }
 
       long pedalOutput;
@@ -211,14 +213,14 @@ class Pedal
 
       long inputMapHID[6] = {};
       utilLib.copyArray(_inputMap, inputMapHID, 6);
-      utilLib.arrayMapMultiplier(inputMapHID, (_sensor_range / 100));
+      utilLib.arrayMapMultiplier(inputMapHID, (_hid_bit / 100));
 
       long outputMapHID[6] = {};
       utilLib.copyArray(_outputMap, outputMapHID, 6);
-      utilLib.arrayMapMultiplier(outputMapHID, (_sensor_range / 100));
+      utilLib.arrayMapMultiplier(outputMapHID, (_hid_bit / 100));
 
       //map(value, fromLow, fromHigh, toLow, toHigh)
-      beforeHID = map(pedalOutput, lowDeadzone, topDeadzone, 0, _sensor_range); // this upscales 500 -> 1023
+      beforeHID = map(pedalOutput, lowDeadzone, topDeadzone, 0, _hid_bit); // this upscales 500 -> 1023
       afterHID = multiMap<long>(beforeHID, inputMapHID, outputMapHID, 6);
 
       beforeSerial = map(pedalOutput, lowDeadzone, topDeadzone, 0, _serial_range); // this downscales 500 -> 100
