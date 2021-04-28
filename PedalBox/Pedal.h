@@ -1,18 +1,11 @@
-#define SENSOR_RANGE 1023
-#define SERIAL_RANGE 100
+#ifndef Pedal_h
+#define Pedal_h
 
-#define BRAKE_PEDAL_LOAD_BEAM_CELL_TARE_REPS  10
-#define BRAKE_PEDAL_LOAD_BEAM_CELL_MAX_VAL  2000000
-#define BRAKE_PEDAL_LOAD_BEAM_CELL_SCALING  1100
-#define SENSITIVITY 64 // Setting for HX711 Load Cell sensitivity. Medium = 64, High = 128, (*Channel B only, Low = 32)
-//#define GAIN 128
-
-#ifndef UtilLib
 #include "UtilLibrary.h"
 
 #include "Smoothed.h"
 
-#include <HX711.h>
+#include "HX711.h"
 
 #include "ADS1X15.h"
 
@@ -31,6 +24,10 @@ class Pedal
       _mySensor.clear();
     }
 
+    void Pedal::setBits (int bits) {
+      _sensor_range = bits;
+    }
+
     void Pedal::ConfigAnalog ( byte analogInput) {
       _analogInput = analogInput;
       _signal = 0;
@@ -38,18 +35,13 @@ class Pedal
 
     void Pedal::ConfigLoadCell (int DOUT, int CLK)
     {
-      HX711 _loadCell(DOUT, CLK, 128);
-      _loadCell.tare(BRAKE_PEDAL_LOAD_BEAM_CELL_TARE_REPS); // Reset values to zero
+      _loadCell.begin(DOUT, CLK, _loadcell_gain);
+      _loadCell.tare(_loadcell_tare_reps); // Reset values to zero
       _signal = 1;
     }
 
-    void Pedal::ConfigADS (int channel)
+    void Pedal::ConfigADS (ADS1115 _ads1015, int channel)
     {
-      ADS1115 _ads1015;
-      _ads1015.begin();
-      _ads1015.setGain(0);      // 6.144 volt
-      _ads1015.setDataRate(7);  // fast
-      _ads1015.setMode(0);      // continuous mode
       _ads1015.readADC(channel);      // first read to trigger
       _signal = 2;
     }
@@ -70,14 +62,14 @@ class Pedal
       }
       if (_signal == 1) {
         rawValue = _loadCell.read();
-        if (rawValue > BRAKE_PEDAL_LOAD_BEAM_CELL_MAX_VAL) {
+        if (rawValue > _loadcell_max_val) {
           rawValue = 0;
         }
         if (rawValue < 0) rawValue = 0;
-        rawValue /= BRAKE_PEDAL_LOAD_BEAM_CELL_SCALING;
+        rawValue /= _loadcell_scaling;
       }
       if (_signal == 2) {
-        rawValue = _ads1015.getValue();
+        rawValue = _ads1015.readADC(channel);
         if (rawValue < 0) rawValue = 0;
       }
 
@@ -102,7 +94,7 @@ class Pedal
 
     ////////////////////
     void Pedal::resetCalibrationValues(int EEPROMSpace) {
-      int resetMap[4] = {0, SENSOR_RANGE, 0, SENSOR_RANGE};
+      int resetMap[4] = {0, _sensor_range, 0, _sensor_range};
       _calibration[0] = resetMap[0];
       _calibration[1] = resetMap[1];
       _calibration[2] = resetMap[2];
@@ -163,17 +155,28 @@ class Pedal
   private:
     String _prefix;
     String _pedalString;
+    int _sensor_range = 32767;
+    int _serial_range = 100;
     int _afterHID;
     int _signal = 0;
+
     Smoothed <int> _mySensor;
+
     HX711 _loadCell;
+    int _loadcell_gain = 128;
+    int _loadcell_tare_reps = 10;
+    int _loadcell_max_val = 2000000;
+    int _loadcell_scaling = 1100;
+    int _loadcell_sensitivity = 64; //Medium = 64, High = 128;
+
     ADS1115 _ads1015;
-    int _analogInput = 0;
+    int channel = 0;
+    int _analogInput = A0;
     int _inverted = 0; //0 = false / 1 - true
     int _smooth = 0; //0 = false / 1 - true
     int _inputMap[6] =  { 0, 20, 40, 60, 80, 100 };
     int _outputMap[6] = { 0, 20, 40, 60, 80, 100 };
-    int _calibration[4] = {0, SENSOR_RANGE, 0, SENSOR_RANGE}; // calibration low, calibration high, deadzone low, deadzone high
+    int _calibration[4] = {0, _sensor_range, 0, _sensor_range}; // calibration low, calibration high, deadzone low, deadzone high
 
 
     void updatePedal(int rawValue) {
@@ -191,7 +194,7 @@ class Pedal
       }
 
       if (_inverted == 1) {
-        rawValue = SENSOR_RANGE - rawValue;
+        rawValue = _sensor_range - rawValue;
       }
 
       int pedalOutput;
@@ -208,17 +211,17 @@ class Pedal
 
       float inputMapHID[6] = {};
       utilLib.copyArray(_inputMap, inputMapHID, 6);
-      utilLib.arrayMapMultiplier(inputMapHID, (SENSOR_RANGE / 100));
+      utilLib.arrayMapMultiplier(inputMapHID, (_sensor_range / 100));
 
       float outputMapHID[6] = {};
       utilLib.copyArray(_outputMap, outputMapHID, 6);
-      utilLib.arrayMapMultiplier(outputMapHID, (SENSOR_RANGE / 100));
+      utilLib.arrayMapMultiplier(outputMapHID, (_sensor_range / 100));
 
       //map(value, fromLow, fromHigh, toLow, toHigh)
-      beforeHID = map(pedalOutput, lowDeadzone, topDeadzone, 0, SENSOR_RANGE); // this upscales 500 -> 1023
+      beforeHID = map(pedalOutput, lowDeadzone, topDeadzone, 0, _sensor_range); // this upscales 500 -> 1023
       afterHID = multiMap<float>(beforeHID, inputMapHID, outputMapHID, 6);
 
-      beforeSerial = map(pedalOutput, lowDeadzone, topDeadzone, 0, SERIAL_RANGE); // this downscales 500 -> 100
+      beforeSerial = map(pedalOutput, lowDeadzone, topDeadzone, 0, _serial_range); // this downscales 500 -> 100
       afterSerial = multiMap<int>(beforeSerial, _inputMap, _outputMap, 6);
 
       ////////////////////////////////////////////////////////////////////////////////

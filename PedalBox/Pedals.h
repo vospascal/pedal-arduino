@@ -1,0 +1,370 @@
+#ifndef Pedals_h
+#define Pedals_h
+
+#include <Joystick.h>
+#include "MultiMap.h"
+#include "SoftwareReset.h"
+#include <EEPROM.h>
+
+#include "UtilLibrary.h"
+
+#include "Pedal.h"
+
+#define E_INIT 1023
+#define E_CLUTCH 0
+#define E_THROTTLE 30
+#define E_BRAKE 60
+#define E_CALIBRATION_C 90
+#define E_CALIBRATION_B 120
+#define E_CALIBRATION_T 150
+#define E_PEDAL_INVERTED_MAP 200
+#define E_PEDAL_SMOOTH_MAP 210
+#define SERIAL_RANGE 100
+
+ADS1115 _ads1015;
+
+Joystick_ _joystick(
+  JOYSTICK_DEFAULT_REPORT_ID,
+  JOYSTICK_TYPE_GAMEPAD,
+  0, 0,                  // Button Count, Hat Switch Count
+  false, false, true,     // X and Y, Z Axis
+  false, false, false,   // Rx, Ry, or Rz
+  false, true,          // rudder or throttle
+  false, true, false
+);  // accelerator, brake, or steering
+
+// create the pedals
+Pedal _throttle = Pedal("T:");
+Pedal _brake = Pedal("B:");
+Pedal _clutch = Pedal("C:");
+
+class Pedals {
+  public:
+    //initialise pedal
+
+    void Pedals::setup() {
+      Pedals::loadEEPROMSettings();
+      _joystick.begin();
+
+      _ads1015.begin();
+      _ads1015.setGain(0);      // 6.144 volt
+      _ads1015.setDataRate(7);  // fast
+      _ads1015.setMode(0);      // continuous mode
+
+      _joystick.setThrottle(0);
+      _joystick.setThrottleRange(0, _throttle_bit);
+      _throttle.setBits(_throttle_bit);
+
+      _joystick.setBrake(0);
+      _joystick.setBrakeRange(0, _brake_bit);
+      _brake.setBits(_brake_bit);
+
+      _joystick.setZAxis(0);
+      _joystick.setZAxisRange(0, _clutch_bit);
+      _clutch.setBits(_clutch_bit);
+    }
+
+    void Pedals::loop() {
+      if (Serial.available() > 0) {
+        String msg = Serial.readStringUntil('\n');
+        String cm = ",";
+        String dash = "-";
+
+        if (msg.indexOf("clearEEPROM") >= 0) {
+          for (int i = 0; i < EEPROM.length(); i++) {
+            EEPROM.write(i, 0);
+          }
+          Serial.println("done");
+        }
+
+        Pedals::resetDevice(msg, cm, dash);
+        Pedals::getMap(msg, cm, dash);
+        Pedals::getInverted(msg, cm, dash);
+        Pedals::getSmooth(msg, cm, dash);
+        Pedals::getCalibration(msg, cm, dash);
+        Pedals::getBits(msg, cm, dash);
+
+
+        if (msg.indexOf("CMAP:") >= 0) {
+          String cmap = msg;
+          cmap.replace("CMAP:", "");
+          _clutch.setOutputMapValues(cmap, E_CLUTCH);
+        }
+
+        if (msg.indexOf("BMAP:") >= 0) {
+          String bmap = msg;
+          bmap.replace("BMAP:", "");
+          _brake.setOutputMapValues(bmap, E_BRAKE);
+        }
+
+        if (msg.indexOf("TMAP:") >= 0) {
+          String tmap = msg;
+          tmap.replace("TMAP:", "");
+          _throttle.setOutputMapValues(tmap, E_THROTTLE);
+        }
+
+        if (msg.indexOf("CALIRESET") >= 0) {
+          _clutch.resetCalibrationValues(E_CALIBRATION_C);
+          _brake.resetCalibrationValues(E_CALIBRATION_B);
+          _throttle.resetCalibrationValues(E_CALIBRATION_T);
+        }
+
+        if (msg.indexOf("CCALI:") >= 0 && msg.indexOf("BCALI:") >= 0 && msg.indexOf("TCALI:") >= 0) {
+          String splitTCALI = utilLib.getValue(msg, ',', 0);
+          splitTCALI.replace("TCALI:", "");
+          _throttle.setCalibrationValues(splitTCALI, E_CALIBRATION_T);
+
+          String splitBCALI = utilLib.getValue(msg, ',', 1);
+          splitBCALI.replace("BCALI:", "");
+          _brake.setCalibrationValues(splitBCALI, E_CALIBRATION_B);
+
+          String splitCCALI = utilLib.getValue(msg, ',', 2);
+          splitCCALI.replace("CCALI:", "");
+          _clutch.setCalibrationValues(splitCCALI, E_CALIBRATION_C);
+        }
+
+        Pedals::updateInverted(msg);
+        Pedals::updateSmooth(msg);
+      }
+
+      _brake.readValues();
+      _throttle.readValues();
+      _clutch.readValues();
+
+      _joystick.setThrottle(_throttle.getAfterHID());
+      _joystick.setBrake(_brake.getAfterHID());
+      _joystick.setZAxis(_clutch.getAfterHID());
+      _joystick.sendState(); // Update the Joystick status on the PC
+
+      if (Serial.availableForWrite()) {
+        Serial.println(_throttle.getPedalString() + _brake.getPedalString() + _clutch.getPedalString());
+      }
+    }
+
+    ///////////////////////// throttle /////////////////////////
+    void Pedals::setThrottleBits(String bits) {
+      _throttle_bit = Pedals::getBit(bits);
+    }
+
+    void Pedals::setThrottleLoadcell(int DOUT, int CLK) {
+      _throttle_pedalType = "Loadcell";
+      _throttle.ConfigLoadCell(DOUT, CLK);
+    }
+
+    void Pedals::setThrottleADSChannel(int channel) {
+      _throttle_pedalType = "ADS";
+      _throttle.ConfigADS(_ads1015, channel);
+    }
+
+    void Pedals::setThrottleAnalogPin(int analogInput) {
+      _throttle_pedalType = "Analog";
+      _throttle_analog_input = analogInput;
+      _throttle.ConfigAnalog(analogInput);
+    }
+
+    String Pedals::getThrottleType() {
+      return _throttle_pedalType;
+    }
+
+    ///////////////////////// brake /////////////////////////
+    void Pedals::setBrakeBits(String bits) {
+      _brake_bit = Pedals::getBit(bits);
+    }
+
+    void Pedals::setBrakeLoadcell(int DOUT, int CLK) {
+      _brake_pedalType = "Loadcell";
+      _brake.ConfigLoadCell(DOUT, CLK);
+    }
+
+    void Pedals::setBrakeADSChannel(int channel) {
+      _brake_pedalType = "ADS";
+      _brake.ConfigADS(_ads1015, channel);
+    }
+
+    void Pedals::setBrakeAnalogPin(int analogInput) {
+      _brake_pedalType = "Analog";
+      _brake_analog_input = analogInput;
+      _brake.ConfigAnalog(analogInput);
+    }
+
+    String Pedals::getBrakeType() {
+      return _brake_pedalType;
+    }
+
+    ///////////////////////// clutch /////////////////////////
+    void Pedals::setClutchBits(String bits) {
+      _clutch_bit = Pedals::getBit(bits);
+    }
+
+    void Pedals::setClutchLoadcell(int DOUT, int CLK) {
+      _clutch_pedalType = "Loadcell";
+      _clutch.ConfigLoadCell(DOUT, CLK);
+    }
+
+    void Pedals::setClutchADSChannel(int channel) {
+      _clutch_pedalType = "ADS";
+      _clutch.ConfigADS(_ads1015, channel);
+    }
+
+    void Pedals::setClutchAnalogPin(int analogInput) {
+      _clutch_pedalType = "Analog";
+      _clutch_analog_input = analogInput;
+      _clutch.ConfigAnalog(analogInput);
+    }
+
+    String Pedals::getClutchType() {
+      return _clutch_pedalType;
+    }
+
+  private:
+    ////// throttle config //////
+    int _throttle_bit = 32767; // default 10bit, list: 8bit, 10bit, 12bit
+    String _throttle_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
+    byte _throttle_analog_input = A0; //default analog input
+
+    ////// brake config //////
+    int _brake_bit = 32767; // default 10bit, list: 8bit, 10bit, 12bit
+    String _brake_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
+    byte _brake_analog_input = A0; //default analog input
+
+    ////// clutch config //////
+    int _clutch_bit = 32767; // default 10bit, list: 8bit, 10bit, 12bit
+    String _clutch_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
+    byte _clutch_analog_input = A0; //default analog input
+
+    int Pedals::getBit(String bits) {
+      if (bits == "8bit") {
+        return 1023;
+      }
+      if (bits == "10bit") {
+        return 32767;
+      }
+      if (bits == "12bit") {
+        return 65535;
+      }
+      return 32767;
+    }
+
+    /////////////////////////////////////////////
+
+    void Pedals::loadEEPROMSettings() {
+      if (EEPROM.read(E_INIT) == 'T') {
+        loadDeviceSettings();
+      } else {
+        resetDeviceSettings();
+      }
+    }
+
+    void Pedals::loadDeviceSettings() {
+      _clutch.getEEPROMOutputMapValues(E_CLUTCH);
+      _brake.getEEPROMOutputMapValues(E_BRAKE);
+      _throttle.getEEPROMOutputMapValues(E_THROTTLE);
+
+
+      String EEPROM_InvertedMap = utilLib.readStringFromEEPROM(E_PEDAL_INVERTED_MAP);
+      String INVER = "INVER:";
+      updateInverted(INVER + EEPROM_InvertedMap);
+
+      String EEPROM_SmoothMap = utilLib.readStringFromEEPROM(E_PEDAL_SMOOTH_MAP);
+      String SMOOTH = "SMOOTH:";
+      updateSmooth(SMOOTH + EEPROM_SmoothMap);
+
+
+      _clutch.getEEPROMCalibrationValues(E_CALIBRATION_C);
+      _brake.getEEPROMCalibrationValues(E_CALIBRATION_B);
+      _throttle.getEEPROMCalibrationValues(E_CALIBRATION_T);
+
+    }
+
+    void Pedals::resetDeviceSettings() {
+      // write
+      EEPROM.write(E_INIT, 'T');
+
+      _clutch.resetOutputMapValues(E_CLUTCH);
+      _brake.resetOutputMapValues(E_THROTTLE);
+      _throttle.resetOutputMapValues(E_BRAKE);
+
+      // 0 = false / 1 = true
+      utilLib.writeStringToEEPROM(E_PEDAL_INVERTED_MAP, "0-0-0");
+
+      // 0 = false / 1 = true
+      utilLib.writeStringToEEPROM(E_PEDAL_SMOOTH_MAP, "1-1-1");
+
+      _clutch.resetCalibrationValues(E_CALIBRATION_C);
+      _brake.resetCalibrationValues(E_CALIBRATION_B);
+      _throttle.resetCalibrationValues(E_CALIBRATION_T);
+
+      softwareReset::standard();
+    }
+
+    void Pedals::resetDevice(String msg, String cm, String dash) {
+      if (msg.indexOf("ResetDevice") >= 0) {
+        resetDeviceSettings();
+      }
+    }
+
+    void Pedals::getMap(String msg, String cm, String dash) {
+      if (msg.indexOf("GetMap") >= 0) {
+        Serial.println(_throttle.getOutputMapValues("TMAP:") + cm + _brake.getOutputMapValues("BMAP:") + cm +
+                       _clutch.getOutputMapValues("CMAP:"));
+      }
+    }
+
+    void Pedals::getSmooth(String msg, String cm, String dash) {
+      if (msg.indexOf("GetSmooth") >= 0) {
+        String SMOOTH = "SMOOTH:";
+        Serial.println(SMOOTH + _throttle.getSmoothValues() + dash + _brake.getSmoothValues() + dash +
+                       _clutch.getSmoothValues());
+      }
+    }
+
+    void Pedals::getBits(String msg, String cm, String dash) {
+      if (msg.indexOf("GetBits") >= 0) {
+        String BITS = "BITS:";
+        Serial.println(BITS + _throttle_bit + dash + _brake_bit + dash + _clutch_bit);
+      }
+    }
+
+
+    void Pedals::getInverted(String msg, String cm, String dash) {
+      if (msg.indexOf("GetInverted") >= 0) {
+        String INVER = "INVER:";
+        Serial.println(INVER + _throttle.getInvertedValues() + dash + _brake.getInvertedValues() + dash +
+                       _clutch.getInvertedValues());
+      }
+    }
+
+    void Pedals::getCalibration(String msg, String cm, String dash) {
+      if (msg.indexOf("GetCali") >= 0) {
+        String cm = ",";
+        Serial.println(_throttle.getCalibrationValues("TCALI:") + cm + _brake.getCalibrationValues("BCALI:") + cm +
+                       _clutch.getCalibrationValues("CCALI:"));
+      }
+    }
+
+    void Pedals::updateSmooth(String msg) {
+      if (msg.indexOf("SMOOTH:") >= 0) {
+        String splitSMOOTH = utilLib.getValue(msg, ',', 0);
+        splitSMOOTH.replace("SMOOTH:", "");
+        _throttle.setSmoothValues(utilLib.getValue(splitSMOOTH, '-', 0).toInt());
+        _brake.setSmoothValues(utilLib.getValue(splitSMOOTH, '-', 1).toInt());
+        _clutch.setSmoothValues(utilLib.getValue(splitSMOOTH, '-', 2).toInt());
+
+        utilLib.writeStringToEEPROM(E_PEDAL_SMOOTH_MAP, splitSMOOTH);
+      }
+    }
+
+    void Pedals::updateInverted(String msg) {
+      if (msg.indexOf("INVER:") >= 0) {
+        String splitINVER = utilLib.getValue(msg, ',', 0);
+        splitINVER.replace("INVER:", "");
+        _throttle.setInvertedValues(utilLib.getValue(splitINVER, '-', 0).toInt());
+        _brake.setInvertedValues(utilLib.getValue(splitINVER, '-', 1).toInt());
+        _clutch.setInvertedValues(utilLib.getValue(splitINVER, '-', 2).toInt());
+
+        utilLib.writeStringToEEPROM(E_PEDAL_INVERTED_MAP, splitINVER);
+      }
+    }
+
+};
+#endif
