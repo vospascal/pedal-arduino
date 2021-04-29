@@ -45,7 +45,6 @@ class Pedal
     {
       this->_ads1015 = _ads1015;
       this->_channel = channel;
-      _ads1015.readADC(channel);      // first read to trigger
       _signal = 2;
     }
 
