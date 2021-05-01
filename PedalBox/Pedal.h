@@ -168,8 +168,8 @@ class Pedal
     HX711 _loadCell;
     int _loadcell_gain = 128;
     int _loadcell_tare_reps = 10;
-    int _loadcell_max_val = 2000000;
-    int _loadcell_scaling = 1100;
+    long _loadcell_max_val = 2000000;
+    long _loadcell_scaling = 1000;
     int _loadcell_sensitivity = 64; //Medium = 64, High = 128;
 
     ADS1115 _ads1015;
