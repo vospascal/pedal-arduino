@@ -1,9 +1,9 @@
 #ifndef Pedals_h
 #define Pedals_h
 
-#include <Joystick.h>
-#include "MultiMap.h"
-#include "SoftwareReset.h"
+#include "src/Joystick/Joystick.h"
+#include "src/MultiMap/MultiMap.h"
+#include "src/SoftwareReset/SoftwareReset.h"
 #include <EEPROM.h>
 
 #include "UtilLibrary.h"

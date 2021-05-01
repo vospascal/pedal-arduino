@@ -3,11 +3,11 @@
 
 #include "UtilLibrary.h"
 
-#include "Smoothed.h"
+#include "src/Smoothed/Smoothed.h"
 
-#include "HX711.h"
+#include "src/HX711/HX711.h"
 
-#include "ADS1X15.h"
+#include "src/ADS1X15/ADS1X15.h"
 
 // init util library
 UtilLib utilLib;
