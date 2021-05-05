@@ -20,7 +20,7 @@ class Pedal
     //initialise pedal
     Pedal(String prefix) {
       _prefix = prefix;
-      _mySensor.begin(SMOOTHED_EXPONENTIAL, 10);
+      _mySensor.begin(SMOOTHED_AVERAGE, 2);
       _mySensor.clear();
     }
 
