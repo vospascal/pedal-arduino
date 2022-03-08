@@ -1,5 +1,6 @@
 ## PedalBox
-arduino side to client gui found here https://github.com/vospascal/pedal-gui
+- client gui arduino side to found here https://github.com/vospascal/pedal-gui
+- client gui in on the web to found here https://vospascal.github.io/pedal-gui-web works with latest chrome version also opensource and zero install https://github.com/vospascal/svelte-webserial unLike the java version.
 
 ## help
 If you want to develop the software furter please create a pull request or create an issue
