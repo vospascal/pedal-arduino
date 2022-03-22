@@ -65,7 +65,7 @@ class Pedal
       if (_signal == 1) {
         rawValue = _loadCell.get_value(1);
         if (rawValue > _loadcell_max_val) {
-          rawValue = 0;
+          rawValue = _loadcell_max_val;
         }
         if (rawValue < 0) rawValue = 0;
         rawValue /= _loadcell_scaling;
