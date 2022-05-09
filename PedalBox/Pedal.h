@@ -65,7 +65,8 @@ class Pedal
       if (_signal == 1) {
         rawValue = _loadCell.get_value(1);
         if (rawValue > _loadcell_max_val) {
-          rawValue = _loadcell_max_val;
+            rawValue = 0;
+//          rawValue = _loadcell_max_val;
         }
         if (rawValue < 0) rawValue = 0;
         rawValue /= _loadcell_scaling;
@@ -168,7 +169,7 @@ class Pedal
     HX711 _loadCell;
     int _loadcell_gain = 128;
     int _loadcell_tare_reps = 10;
-    long _loadcell_max_val = 2000000;
+    long _loadcell_max_val = 16777215; //24bit
     long _loadcell_scaling = 1000;
     int _loadcell_sensitivity = 64; //Medium = 64, High = 128;
 

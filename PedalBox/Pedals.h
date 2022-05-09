@@ -266,6 +266,9 @@ class Pedals {
       if (bits == "16bit") {
         return 65535;
       }
+      if (bits == "24bit") {
+        return 16777215;
+      }
       return 32767;
     }
 
