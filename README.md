@@ -77,3 +77,24 @@ Measure the current, use "Arduino Micro Pro" as to read the analogue value from 
 2 V5/vcc
 3 GND
 4 analog/a1
+
+
+## one loadcell example
+
+| hx711  | arduino  | 
+|---|---|
+| gnd  |  gnd |
+| sck  | pin 5  | 
+| vcc  | vcc  |
+| dt(data)  |  pin 7 |
+
+## multi loadcell example
+
+| hx711  | arduino  | 
+|---|---|
+| gnd  |  gnd |
+| sck  | pin 5  | 
+| vcc  | vcc  |
+| dt(data)  |  pin 6 |
+| dt(data)  |  pin 7 |
+| dt(data)  |  pin 8 |
