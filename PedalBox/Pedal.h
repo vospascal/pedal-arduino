@@ -37,6 +37,7 @@ class Pedal
     void Pedal::ConfigLoadCell (int DOUT, int CLK)
     {
       _loadCell.begin(DOUT, CLK, _loadcell_gain);
+      _loadCell.set_scale(-7050.0);  // -7050.0 This value is obtained using the SparkFun_HX711_Calibration sketch
       _loadCell.tare(_loadcell_tare_reps); // Reset values to zero
       _signal = 1;
     }
@@ -63,10 +64,12 @@ class Pedal
         if (rawValue < 0) rawValue = 0;
       }
       if (_signal == 1) {
+     
         rawValue = _loadCell.get_value(1);
+        Serial.println(rawValue);
         if (rawValue > _loadcell_max_val) {
-            rawValue = 0;
-//          rawValue = _loadcell_max_val;
+//            rawValue = 0;
+          rawValue = _loadcell_max_val;
         }
         if (rawValue < 0) rawValue = 0;
         rawValue /= _loadcell_scaling;
@@ -170,7 +173,7 @@ class Pedal
     int _loadcell_gain = 128;
     int _loadcell_tare_reps = 10;
     long _loadcell_max_val = 16777215; //24bit
-    long _loadcell_scaling = 1000;
+    long _loadcell_scaling = 10;
     int _loadcell_sensitivity = 64; //Medium = 64, High = 128;
 
     ADS1115 _ads1015;
