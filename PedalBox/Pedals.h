@@ -52,16 +52,16 @@ class Pedals {
       _ads1015.setMode(0);      // continuous mode
 
       _joystick.setThrottle(0);
-      _joystick.setThrottleRange(0, _throttle_raw_bit);
-      _throttle.setBits(_throttle_raw_bit, _throttle_hid_bit);
+      _joystick.setThrottleRange(0, (_throttle_hid_bit - 1));
+      _throttle.setBits((_throttle_raw_bit - 1), (_throttle_hid_bit - 1));
 
       _joystick.setBrake(0);
-      _joystick.setBrakeRange(0, _brake_raw_bit);
-      _brake.setBits(_brake_raw_bit, _brake_hid_bit);
+      _joystick.setBrakeRange(0, (_brake_hid_bit - 1));
+      _brake.setBits((_brake_raw_bit - 1), (_brake_hid_bit - 1));
 
       _joystick.setZAxis(0);
-      _joystick.setZAxisRange(0, _clutch_raw_bit);
-      _clutch.setBits(_clutch_raw_bit, _clutch_hid_bit);
+      _joystick.setZAxisRange(0, (_clutch_hid_bit - 1));
+      _clutch.setBits((_clutch_raw_bit - 1), (_clutch_hid_bit - 1));
     }
 
     void Pedals::loop() {
@@ -221,20 +221,20 @@ class Pedals {
 
   private:
     ////// throttle config //////
-    long _throttle_raw_bit = 32767; // default 15bit
-    long _throttle_hid_bit = 32767; // default 15bit
+    long _throttle_raw_bit = 65535; // default 16bit
+    long _throttle_hid_bit = 65535; // default 16bit
     String _throttle_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
     byte _throttle_analog_input = A0; //default analog input
 
     ////// brake config //////
-    long _brake_raw_bit = 32767; // default 15bit
-    long _brake_hid_bit = 32767; // default 15bit
+    long _brake_raw_bit = 65535; // default 16bit
+    long _brake_hid_bit = 65535; // default 16bit
     String _brake_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
     byte _brake_analog_input = A0; //default analog input
 
     ////// clutch config //////
-    long _clutch_raw_bit = 32767; // default 15bit
-    long _clutch_hid_bit = 32767; // default 15bit
+    long _clutch_raw_bit = 65535; // default 16bit
+    long _clutch_hid_bit = 65535; // default 16bit
     String _clutch_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
     byte _clutch_analog_input = A0; //default analog input
 
@@ -266,10 +266,31 @@ class Pedals {
       if (bits == "16bit") {
         return 65535;
       }
+      if (bits == "17bit") {
+        return 131071;
+      }
+      if (bits == "18bit") {
+        return 262143;
+      }
+      if (bits == "19bit") {
+        return 524287;
+      }
+      if (bits == "20bit") {
+        return 1048575;
+      }
+      if (bits == "21bit") {
+        return 2097151;
+      }
+      if (bits == "22bit") {
+        return 4194303;
+      }
+      if (bits == "23bit") {
+        return 8388607;
+      }
       if (bits == "24bit") {
         return 16777215;
       }
-      return 32767;
+      return 65535;
     }
 
     /////////////////////////////////////////////

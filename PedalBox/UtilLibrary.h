@@ -27,6 +27,10 @@ class UtilLib  {
 
     String getValue(String data, char separator, int index);
 
+    long scaleMap(long pedalOutput, long lowDeadzone, long topDeadzone, long lowBits, long highBits);
+
+    long scaleMultiMap(long value, long* inputMap, long* outputMap, int size);
+
   private:
 };
 #endif

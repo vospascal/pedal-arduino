@@ -64,15 +64,12 @@ class Pedal
         if (rawValue < 0) rawValue = 0;
       }
       if (_signal == 1) {
-     
         rawValue = _loadCell.get_value(1);
-        Serial.println(rawValue);
         if (rawValue > _loadcell_max_val) {
 //            rawValue = 0;
-          rawValue = _loadcell_max_val;
+          rawValue = (_loadcell_max_val - 1);
         }
         if (rawValue < 0) rawValue = 0;
-        rawValue /= _loadcell_scaling;
       }
       if (_signal == 2) {
         rawValue = _ads1015.readADC(_channel);
@@ -121,7 +118,6 @@ class Pedal
       _calibration[3] = long(utilLib.getValue(map, '-', 3).toInt());
 
       // update EEPROM settings
-      // todo:fix
       utilLib.writeStringToEEPROM(EEPROMSpace, map);
     }
 
@@ -144,7 +140,6 @@ class Pedal
       _outputMap[5] = utilLib.getValue(map, '-', 5).toInt();
 
       // update EEPROM settings
-      // todo:fix
       utilLib.writeStringToEEPROM(EEPROMSpace, map);
     }
 
@@ -161,19 +156,18 @@ class Pedal
   private:
     String _prefix;
     String _pedalString;
-    long _raw_bit = 32767;
-    long _hid_bit = 32767;
-    int _serial_range = 100;
-    int _afterHID;
+    long _raw_bit = 65535;
+    long _hid_bit = 65535;
+    long _serial_range = 100;
+    long _afterHID;
     int _signal = 0;
 
-    Smoothed <int> _mySensor;
+    Smoothed <long> _mySensor;
 
     HX711 _loadCell;
     int _loadcell_gain = 128;
     int _loadcell_tare_reps = 10;
     long _loadcell_max_val = 16777215; //24bit
-    long _loadcell_scaling = 10;
     int _loadcell_sensitivity = 64; //Medium = 64, High = 128;
 
     ADS1115 _ads1015;
@@ -224,12 +218,11 @@ class Pedal
       utilLib.copyArray(_outputMap, outputMapHID, 6);
       utilLib.arrayMapMultiplier(outputMapHID, (_hid_bit / 100));
 
-      //map(value, fromLow, fromHigh, toLow, toHigh)
-      beforeHID = map(pedalOutput, lowDeadzone, topDeadzone, 0, _hid_bit); // this upscales 500 -> 1023
-      afterHID = multiMap<long>(beforeHID, inputMapHID, outputMapHID, 6);
+      beforeHID = utilLib.scaleMap(pedalOutput, lowDeadzone, topDeadzone, 0, _hid_bit);
+      afterHID = utilLib.scaleMultiMap(beforeHID, inputMapHID, outputMapHID, 6);
 
-      beforeSerial = map(pedalOutput, lowDeadzone, topDeadzone, 0, _serial_range); // this downscales 500 -> 100
-      afterSerial = multiMap<long>(beforeSerial, _inputMap, _outputMap, 6);
+      beforeSerial = utilLib.scaleMap(pedalOutput, lowDeadzone, topDeadzone, 0, _serial_range);
+      afterSerial = utilLib.scaleMultiMap(beforeSerial, _inputMap, _outputMap, 6);
 
       ////////////////////////////////////////////////////////////////////////////////
 

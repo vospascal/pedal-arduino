@@ -5,12 +5,13 @@ UtilLib::UtilLib() {
 }
 
 void UtilLib::arrayMapMultiplier(long *list, long multipier) {
-  list[0] = (int)(list[0] * multipier);
-  list[1] = (int)(list[1] * multipier);
-  list[2] = (int)(list[2] * multipier);
-  list[3] = (int)(list[3] * multipier);
-  list[4] = (int)(list[4] * multipier);
-  list[5] = (int)(list[5] * multipier);
+
+  list[0] = long(double(list[0] * multipier));
+  list[1] = long(double(list[1] * multipier));
+  list[2] = long(double(list[2] * multipier));
+  list[3] = long(double(list[3] * multipier));
+  list[4] = long(double(list[4] * multipier));
+  list[5] = long(double(list[5] * multipier));
 }
 
 
@@ -85,4 +86,35 @@ String UtilLib::getValue(String data, char separator, int index) {
   }
 
   return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
+
+
+long UtilLib::scaleMap(long pedalOutput, long lowDeadzone, long topDeadzone, long lowBits, long highBits){
+  return long( double(pedalOutput - lowDeadzone) * double(highBits - lowBits) / (topDeadzone - lowDeadzone) + lowBits);
+}
+
+
+
+long UtilLib::scaleMultiMap(long value, long* inputMap, long* outputMap, int size) {
+  if (value <= inputMap[0]) return outputMap[0];
+  if (value >= inputMap[size - 1]) return outputMap[size - 1];
+
+  // search right interval
+  uint8_t pos = 1;  // inputMap[0] allready tested
+  while (value > inputMap[pos]) pos++;
+
+  // this will handle all exact "points" in the _in array
+  if (value == inputMap[pos]) return outputMap[pos];
+
+  // interpolate in the right segment for the rest
+  return long (
+      double(
+          double(value - inputMap[pos - 1]) *
+          double(outputMap[pos] - outputMap[pos - 1])
+      ) /
+      double(inputMap[pos] - inputMap[pos - 1]) +
+      outputMap[pos - 1]
+  );
+//  return (val - _in[pos - 1]) * (_out[pos] - _out[pos - 1]) / (_in[pos] - _in[pos - 1]) + _out[pos - 1];
+
 }
