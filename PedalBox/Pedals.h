@@ -26,12 +26,12 @@ ADS1115 _ads1015;
 Joystick_ _joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_GAMEPAD,
-  0, 0,                  // Button Count, Hat Switch Count
-  false, false, true,     // X and Y, Z Axis
-  false, false, false,   // Rx, Ry, or Rz
-  false, true,          // rudder or throttle
-  false, true, false
-);  // accelerator, brake, or steering
+  0, 0,                 // Button Count, Hat Switch Count
+  false, false, false,  // X and Y, Z Axis
+  true, true, true,     // Rx, Ry, or Rz
+  false, false,         // rudder or throttle
+  false, false, false   // accelerator, brake, or steering
+); 
 
 // create the pedals
 Pedal _throttle = Pedal("T:");
@@ -51,16 +51,16 @@ class Pedals {
       _ads1015.setDataRate(7);  // fast
       _ads1015.setMode(0);      // continuous mode
 
-      _joystick.setThrottle(0);
-      _joystick.setThrottleRange(0, (_throttle_hid_bit - 1));
+      _joystick.setRxAxis(0);
+      _joystick.setRxAxisRange(0, (_throttle_hid_bit - 1));
       _throttle.setBits((_throttle_raw_bit - 1), (_throttle_hid_bit - 1));
 
-      _joystick.setBrake(0);
-      _joystick.setBrakeRange(0, (_brake_hid_bit - 1));
+      _joystick.setRyAxis(0);
+      _joystick.setRyAxisRange(0, (_brake_hid_bit - 1));
       _brake.setBits((_brake_raw_bit - 1), (_brake_hid_bit - 1));
 
-      _joystick.setZAxis(0);
-      _joystick.setZAxisRange(0, (_clutch_hid_bit - 1));
+      _joystick.setRzAxis(0);
+      _joystick.setRzAxisRange(0, (_clutch_hid_bit - 1));
       _clutch.setBits((_clutch_raw_bit - 1), (_clutch_hid_bit - 1));
     }
 
@@ -78,12 +78,12 @@ class Pedals {
         }
 
         Pedals::resetDevice(msg, cm, dash);
+        Pedals::getUsage(msg, cm, dash);
         Pedals::getMap(msg, cm, dash);
         Pedals::getInverted(msg, cm, dash);
         Pedals::getSmooth(msg, cm, dash);
         Pedals::getCalibration(msg, cm, dash);
         Pedals::getBits(msg, cm, dash);
-
 
         if (msg.indexOf("CMAP:") >= 0) {
           String cmap = msg;
@@ -127,21 +127,38 @@ class Pedals {
         Pedals::updateSmooth(msg);
       }
 
-      _brake.readValues();
-      _throttle.readValues();
-      _clutch.readValues();
+      String SerialString = "";
 
-      _joystick.setThrottle(_throttle.getAfterHID());
-      _joystick.setBrake(_brake.getAfterHID());
-      _joystick.setZAxis(_clutch.getAfterHID());
+      if(_brake_on){
+         _brake.readValues();
+         _joystick.setRyAxis(_brake.getAfterHID());
+         SerialString += _brake.getPedalString();
+      }
+
+      if(_throttle_on){
+        _throttle.readValues();
+        _joystick.setRxAxis(_throttle.getAfterHID());
+          SerialString += _throttle.getPedalString();
+      }
+
+      if(_clutch_on){
+        _clutch.readValues();
+        _joystick.setRzAxis(_clutch.getAfterHID());
+        SerialString += _clutch.getPedalString();
+      }
+
       _joystick.sendState(); // Update the Joystick status on the PC
 
       if (Serial.availableForWrite()) {
-        Serial.println(_throttle.getPedalString() + _brake.getPedalString() + _clutch.getPedalString());
+        Serial.println(SerialString);
       }
     }
 
     ///////////////////////// throttle /////////////////////////
+    void Pedals::setThrottleOn(bool on) {
+      _throttle_on = on;
+    }
+
     void Pedals::setThrottleBits(String rawBit, String hidBit) {
       _throttle_raw_bit = Pedals::getBit(rawBit);
       _throttle_hid_bit = Pedals::getBit(hidBit);
@@ -168,6 +185,10 @@ class Pedals {
     }
 
     ///////////////////////// brake /////////////////////////
+    void Pedals::setBrakeOn(bool on) {
+      _brake_on = on;
+    }
+
     void Pedals::setBrakeBits(String rawBit, String hidBit) {
       _brake_raw_bit = Pedals::getBit(rawBit);
       _brake_hid_bit = Pedals::getBit(hidBit);
@@ -194,6 +215,10 @@ class Pedals {
     }
 
     ///////////////////////// clutch /////////////////////////
+    void Pedals::setClutchOn(bool on) {
+      _clutch_on = on;
+    }
+
     void Pedals::setClutchBits(String rawBit, String hidBit) {
       _clutch_raw_bit = Pedals::getBit(rawBit);
       _clutch_hid_bit = Pedals::getBit(hidBit);
@@ -221,18 +246,21 @@ class Pedals {
 
   private:
     ////// throttle config //////
+    bool _throttle_on = false;
     long _throttle_raw_bit = 65535; // default 16bit
     long _throttle_hid_bit = 65535; // default 16bit
     String _throttle_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
     byte _throttle_analog_input = A0; //default analog input
 
     ////// brake config //////
+    bool _brake_on = false;
     long _brake_raw_bit = 65535; // default 16bit
     long _brake_hid_bit = 65535; // default 16bit
     String _brake_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
     byte _brake_analog_input = A0; //default analog input
 
     ////// clutch config //////
+    bool _clutch_on = false;
     long _clutch_raw_bit = 65535; // default 16bit
     long _clutch_hid_bit = 65535; // default 16bit
     String _clutch_pedalType = "Analog"; //default Analog list: Analog, Loadcell, ADS
@@ -348,6 +376,13 @@ class Pedals {
     void Pedals::resetDevice(String msg, String cm, String dash) {
       if (msg.indexOf("ResetDevice") >= 0) {
         resetDeviceSettings();
+      }
+    }
+
+    void Pedals::getUsage(String msg, String cm, String dash) {
+      if (msg.indexOf("GetUsage") >= 0) {
+        String USAGE = "USAGE:";
+        Serial.println(USAGE + _throttle_on + dash + _brake_on + dash + _clutch_on);
       }
     }
 

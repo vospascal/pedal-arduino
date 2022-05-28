@@ -1,4 +1,5 @@
-// if arduino doest upload wire RST to GND to reset and upload empty sketch
+
+ // if arduino doest upload wire RST to GND to reset and upload empty sketch
 
 #include "Pedals.h"
 
@@ -8,17 +9,20 @@ Pedals pedals;
 void setup() {
   // initialize serial communication at 115200 bits per second:
   Serial.begin(115200);
-  pedals.setThrottleBits("24bit", "15bit");
+  pedals.setThrottleOn(true);
+  pedals.setThrottleBits("10bit", "15bit");
   pedals.setThrottleAnalogPin(A0);
 //   pedals.setThrottleADSChannel(1);
 //   pedals.setThrottleLoadcell(6,5);
 
-  pedals.setBrakeBits("24bit", "15bit");
+  pedals.setBrakeOn(true);
+  pedals.setBrakeBits("10bit", "15bit");
   pedals.setBrakeAnalogPin(A3);
 //   pedals.setBrakeADSChannel(1);
 //   pedals.setBrakeLoadcell(7,5);
 
-  pedals.setClutchBits("24bit", "15bit");
+  pedals.setClutchOn(true);
+  pedals.setClutchBits("10bit", "15bit");
   pedals.setClutchAnalogPin(A1);
 //   pedals.setClutchADSChannel(1);
 //   pedals.setClutchLoadcell(8,5);
