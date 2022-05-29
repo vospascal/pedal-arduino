@@ -14,9 +14,11 @@
 // init util library
 UtilLib utilLib;
 
+// High weights (90, for example) favor new data over old data. So, the output responds quickly to changes in the input and is not smoothed much.
+// Low values of (10, for example) favor old data over new data. So, the output is heavily smoothed and the filter responds slowly to changes (noisy or not) in the input.
 ExponentialFilter<long> BrakeFilter(15, 0);
-ExponentialFilter<long> ClutchFilter(10, 0);
-ExponentialFilter<long> ThrottleFilter(10, 0);
+ExponentialFilter<long> ClutchFilter(30, 0);
+ExponentialFilter<long> ThrottleFilter(30, 0);
 
 class Pedal
 {
