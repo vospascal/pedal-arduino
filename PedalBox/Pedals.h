@@ -129,16 +129,16 @@ class Pedals {
 
       String SerialString = "";
 
-      if(_brake_on){
-         _brake.readValues();
-         _joystick.setRyAxis(_brake.getAfterHID());
-         SerialString += _brake.getPedalString();
-      }
-
       if(_throttle_on){
         _throttle.readValues();
         _joystick.setRxAxis(_throttle.getAfterHID());
           SerialString += _throttle.getPedalString();
+      }
+      
+      if(_brake_on){
+         _brake.readValues();
+         _joystick.setRyAxis(_brake.getAfterHID());
+         SerialString += _brake.getPedalString();
       }
 
       if(_clutch_on){

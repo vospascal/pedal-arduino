@@ -3,7 +3,9 @@
 
 #include "UtilLibrary.h"
 
-#include "src/Smoothed/Smoothed.h"
+//#include "src/Smoothed/Smoothed.h"
+
+#include "src/Filter.h"
 
 #include "src/HX711/HX711.h"
 
@@ -12,16 +14,16 @@
 // init util library
 UtilLib utilLib;
 
+ExponentialFilter<long> BrakeFilter(15, 0);
+ExponentialFilter<long> ClutchFilter(10, 0);
+ExponentialFilter<long> ThrottleFilter(10, 0);
 
 class Pedal
 {
-
   public:
     //initialise pedal
     Pedal(String prefix) {
       _prefix = prefix;
-      _mySensor.begin(SMOOTHED_AVERAGE, 2);
-      _mySensor.clear();
     }
 
     void Pedal::setBits (long rawBit, long hidBit) {
@@ -162,8 +164,9 @@ class Pedal
     long _afterHID;
     int _signal = 0;
 
-    Smoothed <long> _mySensor;
-
+    // Create a new exponential filter with a weight of 10 and initial value of 0. 
+    //ExponentialFilter<long> pedalFilter(20, 0);
+    
     HX711 _loadCell;
     int _loadcell_gain = 128;
     int _loadcell_tare_reps = 10;
@@ -190,8 +193,19 @@ class Pedal
       ////////////////////////////////////////////////////////////////////////////////
 
       if (_smooth == 1) {
-        _mySensor.add(rawValue);
-        rawValue = _mySensor.get();
+        if(_prefix == "B:") {
+          BrakeFilter.Filter(rawValue);
+          rawValue = BrakeFilter.Current();
+        }
+        if(_prefix == "T:") {
+          ThrottleFilter.Filter(rawValue);
+          rawValue = ThrottleFilter.Current();
+        }
+        if(_prefix == "C:") {
+          ClutchFilter.Filter(rawValue);
+          rawValue = ClutchFilter.Current();
+        }
+    
       }
 
       if (_inverted == 1) {
