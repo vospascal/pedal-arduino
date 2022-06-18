@@ -10,19 +10,19 @@ void setup() {
   // initialize serial communication at 115200 bits per second:
   Serial.begin(115200);
   pedals.setThrottleOn(true);
-  pedals.setThrottleBits("10bit", "15bit");
+  pedals.setThrottleBits("10bit", "16bit");
   pedals.setThrottleAnalogPin(A0);
 //   pedals.setThrottleADSChannel(1);
 //   pedals.setThrottleLoadcell(6,5);
 
   pedals.setBrakeOn(true);
-  pedals.setBrakeBits("10bit", "15bit");
-  pedals.setBrakeAnalogPin(A3);
+  pedals.setBrakeBits("20bit", "16bit");
+//  pedals.setBrakeAnalogPin(A3);
 //   pedals.setBrakeADSChannel(1);
-//   pedals.setBrakeLoadcell(7,5);
+   pedals.setBrakeLoadcell(7,5);
 
   pedals.setClutchOn(true);
-  pedals.setClutchBits("10bit", "15bit");
+  pedals.setClutchBits("10bit", "16bit");
   pedals.setClutchAnalogPin(A1);
 //   pedals.setClutchADSChannel(1);
 //   pedals.setClutchLoadcell(8,5);

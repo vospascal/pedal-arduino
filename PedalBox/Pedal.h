@@ -16,9 +16,9 @@ UtilLib utilLib;
 
 // High weights (90, for example) favor new data over old data. So, the output responds quickly to changes in the input and is not smoothed much.
 // Low values of (10, for example) favor old data over new data. So, the output is heavily smoothed and the filter responds slowly to changes (noisy or not) in the input.
-ExponentialFilter<long> BrakeFilter(15, 0);
-ExponentialFilter<long> ClutchFilter(30, 0);
-ExponentialFilter<long> ThrottleFilter(30, 0);
+ExponentialFilter<float> BrakeFilter(15, 0);
+ExponentialFilter<float> ClutchFilter(30, 0);
+ExponentialFilter<float> ThrottleFilter(30, 0);
 
 class Pedal
 {
@@ -197,15 +197,15 @@ class Pedal
       if (_smooth == 1) {
         if(_prefix == "B:") {
           BrakeFilter.Filter(rawValue);
-          rawValue = BrakeFilter.Current();
+          rawValue = (long)BrakeFilter.Current();
         }
         if(_prefix == "T:") {
           ThrottleFilter.Filter(rawValue);
-          rawValue = ThrottleFilter.Current();
+          rawValue = (long)ThrottleFilter.Current();
         }
         if(_prefix == "C:") {
           ClutchFilter.Filter(rawValue);
-          rawValue = ClutchFilter.Current();
+          rawValue = (long)ClutchFilter.Current();
         }
     
       }
