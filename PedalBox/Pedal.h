@@ -3,9 +3,7 @@
 
 #include "UtilLibrary.h"
 
-//#include "src/Smoothed/Smoothed.h"
-
-#include "src/Filter.h"
+#include "Filters.h"
 
 #include "src/HX711/HX711.h"
 
@@ -14,11 +12,10 @@
 // init util library
 UtilLib utilLib;
 
-// High weights (90, for example) favor new data over old data. So, the output responds quickly to changes in the input and is not smoothed much.
-// Low values of (10, for example) favor old data over new data. So, the output is heavily smoothed and the filter responds slowly to changes (noisy or not) in the input.
-ExponentialFilter<float> BrakeFilter(15, 0);
-ExponentialFilter<float> ClutchFilter(30, 0);
-ExponentialFilter<float> ThrottleFilter(30, 0);
+Biquad _brakeFilter = Biquad(BiquadType::lowpass, 0.2, 0.2, 0.0);
+Biquad _clutchFilter = Biquad(BiquadType::lowpass, 0.2, 0.2, 0.0);
+Biquad _throttleFilter = Biquad(BiquadType::lowpass, 0.2, 0.2, 0.0);
+
 
 class Pedal
 {
@@ -196,16 +193,19 @@ class Pedal
 
       if (_smooth == 1) {
         if(_prefix == "B:") {
-          BrakeFilter.Filter(rawValue);
-          rawValue = (long)BrakeFilter.Current();
+//          BrakeFilter.Filter(rawValue);
+//          rawValue = (long)BrakeFilter.Current();
+          rawValue =  _brakeFilter.process(rawValue);
         }
         if(_prefix == "T:") {
-          ThrottleFilter.Filter(rawValue);
-          rawValue = (long)ThrottleFilter.Current();
+//          ThrottleFilter.Filter(rawValue);
+//          rawValue = (long)ThrottleFilter.Current();
+          rawValue =  _throttleFilter.process(rawValue);
         }
         if(_prefix == "C:") {
-          ClutchFilter.Filter(rawValue);
-          rawValue = (long)ClutchFilter.Current();
+//          ClutchFilter.Filter(rawValue);
+//          rawValue = (long)ClutchFilter.Current();
+          rawValue =  _clutchFilter.process(rawValue);
         }
     
       }
