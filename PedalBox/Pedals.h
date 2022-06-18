@@ -21,6 +21,9 @@
 #define E_PEDAL_SMOOTH_MAP 210
 #define SERIAL_RANGE 100
 
+String cm = ",";
+String dash = "-";
+
 ADS1115 _ads1015;
 
 Joystick_ _joystick(
@@ -67,8 +70,6 @@ class Pedals {
     void Pedals::loop() {
       if (Serial.available() > 0) {
         String msg = Serial.readStringUntil('\n');
-        String cm = ",";
-        String dash = "-";
 
         if (msg.indexOf("clearEEPROM") >= 0) {
           for (int i = 0; i < EEPROM.length(); i++) {
@@ -77,13 +78,13 @@ class Pedals {
           Serial.println("done");
         }
 
-        Pedals::resetDevice(msg, cm, dash);
-        Pedals::getUsage(msg, cm, dash);
-        Pedals::getMap(msg, cm, dash);
-        Pedals::getInverted(msg, cm, dash);
-        Pedals::getSmooth(msg, cm, dash);
-        Pedals::getCalibration(msg, cm, dash);
-        Pedals::getBits(msg, cm, dash);
+        Pedals::resetDevice(msg);
+        Pedals::getUsage(msg);
+        Pedals::getMap(msg);
+        Pedals::getInverted(msg);
+        Pedals::getSmooth(msg);
+        Pedals::getCalibration(msg);
+        Pedals::getBits(msg);
 
         if (msg.indexOf("CMAP:") >= 0) {
           String cmap = msg;
@@ -373,20 +374,20 @@ class Pedals {
       softwareReset::standard();
     }
 
-    void Pedals::resetDevice(String msg, String cm, String dash) {
+    void Pedals::resetDevice(String msg) {
       if (msg.indexOf("ResetDevice") >= 0) {
         resetDeviceSettings();
       }
     }
 
-    void Pedals::getUsage(String msg, String cm, String dash) {
+    void Pedals::getUsage(String msg) {
       if (msg.indexOf("GetUsage") >= 0) {
         String USAGE = "USAGE:";
         Serial.println(USAGE + _throttle_on + dash + _brake_on + dash + _clutch_on);
       }
     }
 
-    void Pedals::getMap(String msg, String cm, String dash) {
+    void Pedals::getMap(String msg) {
       if (msg.indexOf("GetMap") >= 0) {
         Serial.println(
             _throttle.getOutputMapValues("TMAP:") + cm +
@@ -396,7 +397,7 @@ class Pedals {
       }
     }
 
-    void Pedals::getSmooth(String msg, String cm, String dash) {
+    void Pedals::getSmooth(String msg) {
       if (msg.indexOf("GetSmooth") >= 0) {
         String SMOOTH = "SMOOTH:";
         Serial.println(
@@ -408,7 +409,7 @@ class Pedals {
       }
     }
 
-    void Pedals::getBits(String msg, String cm, String dash) {
+    void Pedals::getBits(String msg) {
       if (msg.indexOf("GetBits") >= 0) {
         String BITS = "BITS:";
         Serial.println(
@@ -421,7 +422,7 @@ class Pedals {
     }
 
 
-    void Pedals::getInverted(String msg, String cm, String dash) {
+    void Pedals::getInverted(String msg) {
       if (msg.indexOf("GetInverted") >= 0) {
         String INVER = "INVER:";
         Serial.println(
@@ -433,7 +434,7 @@ class Pedals {
       }
     }
 
-    void Pedals::getCalibration(String msg, String cm, String dash) {
+    void Pedals::getCalibration(String msg) {
       if (msg.indexOf("GetCali") >= 0) {
         String cm = ",";
         Serial.println(

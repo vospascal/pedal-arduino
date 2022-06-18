@@ -6,12 +6,12 @@ UtilLib::UtilLib() {
 
 void UtilLib::arrayMapMultiplier(long *list, long multipier) {
 
-  list[0] = long(double(list[0] * multipier));
-  list[1] = long(double(list[1] * multipier));
-  list[2] = long(double(list[2] * multipier));
-  list[3] = long(double(list[3] * multipier));
-  list[4] = long(double(list[4] * multipier));
-  list[5] = long(double(list[5] * multipier));
+  list[0] = long(float(list[0] * multipier));
+  list[1] = long(float(list[1] * multipier));
+  list[2] = long(float(list[2] * multipier));
+  list[3] = long(float(list[3] * multipier));
+  list[4] = long(float(list[4] * multipier));
+  list[5] = long(float(list[5] * multipier));
 }
 
 
@@ -90,7 +90,7 @@ String UtilLib::getValue(String data, char separator, int index) {
 
 
 long UtilLib::scaleMap(long pedalOutput, long lowDeadzone, long topDeadzone, long lowBits, long highBits){
-  return long( double(pedalOutput - lowDeadzone) * double(highBits - lowBits) / (topDeadzone - lowDeadzone) + lowBits);
+  return long( float(pedalOutput - lowDeadzone) * float(highBits - lowBits) / (topDeadzone - lowDeadzone) + lowBits);
 }
 
 
@@ -108,11 +108,11 @@ long UtilLib::scaleMultiMap(long value, long* inputMap, long* outputMap, int siz
 
   // interpolate in the right segment for the rest
   return long (
-      double(
-          double(value - inputMap[pos - 1]) *
-          double(outputMap[pos] - outputMap[pos - 1])
+      float(
+          float(value - inputMap[pos - 1]) *
+          float(outputMap[pos] - outputMap[pos - 1])
       ) /
-      double(inputMap[pos] - inputMap[pos - 1]) +
+      float(inputMap[pos] - inputMap[pos - 1]) +
       outputMap[pos - 1]
   );
 //  return (val - _in[pos - 1]) * (_out[pos] - _out[pos - 1]) / (_in[pos] - _in[pos - 1]) + _out[pos - 1];
