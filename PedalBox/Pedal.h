@@ -12,9 +12,9 @@
 // init util library
 UtilLib utilLib;
 
-Biquad _brakeFilter = Biquad(BiquadType::lowpass, 0.2, 0.2, 0.0);
-Biquad _clutchFilter = Biquad(BiquadType::lowpass, 0.2, 0.2, 0.0);
-Biquad _throttleFilter = Biquad(BiquadType::lowpass, 0.2, 0.2, 0.0);
+Biquad _brakeFilter = Biquad(BiquadType::lowpass, 0.2, 0.5, 0.0);
+Biquad _clutchFilter = Biquad(BiquadType::lowpass, 0.2, 0.5, 0.0);
+Biquad _throttleFilter = Biquad(BiquadType::lowpass, 0.2, 0.5, 0.0);
 
 
 class Pedal
