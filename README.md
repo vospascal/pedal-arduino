@@ -93,8 +93,10 @@ Measure the current, use "Arduino Micro Pro" as to read the analogue value from 
 | hx711  | arduino  | 
 |---|---|
 | gnd  |  gnd |
-| sck  | pin 5  | 
 | vcc  | vcc  |
-| dt(data)  |  pin 6 |
-| dt(data)  |  pin 7 |
-| dt(data)  |  pin 8 |
+| sck(Clock) - Thr  | pin 9  |
+| sck(Clock) - Brk | pin 7  |
+| sck(Clock) - Clt | pin 5  |
+| dt(Data) - Thr |  pin 8 |
+| dt(Data) - Brk |  pin 6 |
+| dt(Data) - Clt |  pin 4 |
