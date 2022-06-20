@@ -100,3 +100,5 @@ Measure the current, use "Arduino Micro Pro" as to read the analogue value from 
 | dt(Data) - Thr |  pin 8 |
 | dt(Data) - Brk |  pin 6 |
 | dt(Data) - Clt |  pin 4 |
+
+![Alt text](hx711 multiple.jpeg?raw=true "multi hx711")
