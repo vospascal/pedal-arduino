@@ -3,7 +3,7 @@
 
 #include "UtilLibrary.h"
 
-#include "Filters.h"
+#include "LowpassFilter.h"
 
 #include "src/HX711/HX711.h"
 
@@ -12,9 +12,9 @@
 // init util library
 UtilLib utilLib;
 
-Biquad _brakeFilter = Biquad(BiquadType::lowpass, 0.2, 0.5, 0.0);
-Biquad _clutchFilter = Biquad(BiquadType::lowpass, 0.2, 0.5, 0.0);
-Biquad _throttleFilter = Biquad(BiquadType::lowpass, 0.2, 0.5, 0.0);
+LowpassFilter _brakeFilter = LowpassFilter(0.2, 0.5, 0.0);
+LowpassFilter _clutchFilter = LowpassFilter(0.2, 0.5, 0.0);
+LowpassFilter _throttleFilter = LowpassFilter(0.2, 0.5, 0.0);
 
 
 class Pedal

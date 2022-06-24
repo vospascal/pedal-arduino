@@ -17,9 +17,9 @@ void setup() {
 
   pedals.setBrakeOn(true);
   pedals.setBrakeBits("20bit", "15bit");
-//  pedals.setBrakeAnalogPin(A3);
+  pedals.setBrakeAnalogPin(A3);
 //   pedals.setBrakeADSChannel(1);
-   pedals.setBrakeLoadcell(7,5);
+//   pedals.setBrakeLoadcell(7,5);
 
   pedals.setClutchOn(true);
   pedals.setClutchBits("10bit", "15bit");

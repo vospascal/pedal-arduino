@@ -1,12 +1,8 @@
 #ifndef tl
 #define tl
 #include <EEPROM.h>
-
-#if (ARDUINO >=100)
 #include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
+
 
 class UtilLib  {
   public:
