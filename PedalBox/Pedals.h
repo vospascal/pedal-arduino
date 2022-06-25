@@ -29,11 +29,7 @@ ADS1115 _ads1015;
 Joystick_ _joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_GAMEPAD,
-  0, 0,                 // Button Count, Hat Switch Count
-  false, false, false,  // X and Y, Z Axis
-  true, true, true,     // Rx, Ry, or Rz
-  false, false,         // rudder or throttle
-  false, false, false   // accelerator, brake, or steering
+  true, true, true     // Rx, Ry, or Rz
 ); 
 
 // create the pedals
